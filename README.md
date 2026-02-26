@@ -9,7 +9,8 @@ Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler 
 - **Always-On-Verschluesselung** — Datenbank immer mit SQLCipher (AES-256) verschluesselt, auto-generierte 64-Zeichen-Passphrase im Android KeyStore (StrongBox bevorzugt)
 - **Optionale App-Sperre** — Anzeige manuell sperrbar mit Fingerprint/Gesicht oder eigenem Passwort
 - **Favoriten-Accordion** — Favorisierte Clips in aufklappbarer Sektion am Listenkopf
-- **Swipe-to-Delete** mit Undo — Clips per Wisch-Geste loeschen, mit Rueckgaengig-Option
+- **Swipe-to-Delete** mit Undo — Clips per Wisch-Geste loeschen (40%-Schwelle gegen versehentliches Loeschen), mit Rueckgaengig-Option
+- **Content-Type-Icons** — Automatische Erkennung von Social-Media-Links (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub), URLs, E-Mails, Telefonnummern
 - **Integrierte Anleitung** — Hilfe-Dialog direkt in der App
 - **Suche** und Clip-Verwaltung
 - **Material You** (dynamische Farben ab Android 12) mit Dark/Light-Support
@@ -108,6 +109,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Aenderung |
 |---|---|
+| 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Loeschen, Fix: letzter Eintrag loeschbar |
 | 3.2.0 | Undo nach Loeschen, Anleitung, Bugfixes (Copy-Exception-Handling, Swipe-UX-Polish) |
 | 3.1.1 | Clipboard-Erfassung: Mutex-Debouncing, Race-Condition-Fixes, Retry bei DB-Init, Error-Handling |
 | 3.1.0 | Favoriten-Accordion, Swipe-to-Delete, persistente Benachrichtigung |

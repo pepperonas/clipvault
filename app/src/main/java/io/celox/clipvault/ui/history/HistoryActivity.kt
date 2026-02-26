@@ -19,8 +19,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -44,13 +42,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AlternateEmail
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
@@ -91,7 +95,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -110,7 +116,6 @@ import io.celox.clipvault.licensing.LicenseManager
 import io.celox.clipvault.service.ClipAccessibilityService
 import io.celox.clipvault.ui.settings.SettingsActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -570,7 +575,19 @@ fun HistoryScreen(
                     // Regular entries
                     items(items = nonFavorites, key = { it.id }) { entry ->
                         SwipeToDeleteContainer(
-                            onDelete = { viewModel?.delete(entry) }
+                            onDelete = {
+                                viewModel?.delete(entry)
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Eintrag geloescht",
+                                        actionLabel = "Rueckgaengig",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        viewModel?.reInsert(entry)
+                                    }
+                                }
+                            }
                         ) {
                             ClipEntryCard(
                                 entry = entry,
@@ -908,6 +925,49 @@ fun SetupBanner(onOpenSettings: () -> Unit) {
     }
 }
 
+// --- Content Type Detection ---
+
+private enum class ContentType(val icon: ImageVector, val color: Color, val label: String) {
+    INSTAGRAM(Icons.Default.Link, Color(0xFFE1306C), "Instagram"),
+    FACEBOOK(Icons.Default.Link, Color(0xFF1877F2), "Facebook"),
+    YOUTUBE(Icons.Default.PlayCircle, Color(0xFFFF0000), "YouTube"),
+    TWITTER(Icons.Default.Link, Color(0xFF000000), "X"),
+    TIKTOK(Icons.Default.Link, Color(0xFF010101), "TikTok"),
+    LINKEDIN(Icons.Default.Link, Color(0xFF0A66C2), "LinkedIn"),
+    GITHUB(Icons.Default.Code, Color(0xFF333333), "GitHub"),
+    URL(Icons.Default.Link, Color(0xFF666666), "Link"),
+    EMAIL(Icons.Default.AlternateEmail, Color(0xFF4285F4), "E-Mail"),
+    PHONE(Icons.Default.Phone, Color(0xFF34A853), "Telefon"),
+    TEXT(Icons.AutoMirrored.Filled.Notes, Color(0xFF999999), "Text")
+}
+
+private fun detectContentType(content: String): ContentType {
+    val trimmed = content.trim().lowercase()
+    return when {
+        trimmed.contains("instagram.com") || trimmed.contains("instagr.am") -> ContentType.INSTAGRAM
+        trimmed.contains("facebook.com") || trimmed.contains("fb.com") || trimmed.contains("fb.me") -> ContentType.FACEBOOK
+        trimmed.contains("youtube.com") || trimmed.contains("youtu.be") -> ContentType.YOUTUBE
+        trimmed.contains("twitter.com") || trimmed.contains("x.com") || trimmed.contains("t.co/") -> ContentType.TWITTER
+        trimmed.contains("tiktok.com") || trimmed.contains("vm.tiktok.com") -> ContentType.TIKTOK
+        trimmed.contains("linkedin.com") || trimmed.contains("lnkd.in") -> ContentType.LINKEDIN
+        trimmed.contains("github.com") || trimmed.contains("gitlab.com") -> ContentType.GITHUB
+        trimmed.matches(Regex(".*https?://.*")) || trimmed.matches(Regex(".*www\\..*")) -> ContentType.URL
+        trimmed.matches(Regex(".*[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}.*")) -> ContentType.EMAIL
+        trimmed.matches(Regex(".*[+]?[0-9\\s\\-()]{7,}.*")) -> ContentType.PHONE
+        else -> ContentType.TEXT
+    }
+}
+
+@Composable
+private fun ContentTypeIcon(contentType: ContentType, modifier: Modifier = Modifier) {
+    Icon(
+        imageVector = contentType.icon,
+        contentDescription = contentType.label,
+        modifier = modifier.size(18.dp),
+        tint = contentType.color
+    )
+}
+
 // --- Clip Entry Card (Unlocked) ---
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -918,6 +978,7 @@ fun ClipEntryCard(
     onToggleFavorite: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val contentType = remember(entry.content) { detectContentType(entry.content) }
 
     Row(
         modifier = Modifier
@@ -936,6 +997,10 @@ fun ClipEntryCard(
             .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        ContentTypeIcon(
+            contentType = contentType,
+            modifier = Modifier.padding(end = 10.dp)
+        )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = formatTimestamp(entry.timestamp),
@@ -973,67 +1038,52 @@ fun SwipeToDeleteContainer(
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    var isDismissed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
             if (it == SwipeToDismissBoxValue.EndToStart) {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                isDismissed = true
+                onDelete()
                 true
             } else false
-        }
+        },
+        positionalThreshold = { it * 0.4f }
     )
 
-    // Delay actual deletion so collapse animation can play
-    LaunchedEffect(isDismissed) {
-        if (isDismissed) {
-            delay(350)
-            onDelete()
-        }
-    }
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+            val bgAlpha by animateFloatAsState(
+                targetValue = if (isSwiping) 1f else 0f,
+                animationSpec = tween(if (isSwiping) 100 else 300),
+                label = "swipe_bg"
+            )
 
-    AnimatedVisibility(
-        visible = !isDismissed,
-        exit = shrinkVertically(
-            animationSpec = tween(300)
-        ) + fadeOut(animationSpec = tween(200))
-    ) {
-        SwipeToDismissBox(
-            state = dismissState,
-            enableDismissFromStartToEnd = false,
-            enableDismissFromEndToStart = true,
-            backgroundContent = {
-                val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
-                val bgAlpha by animateFloatAsState(
-                    targetValue = if (isSwiping || isDismissed) 1f else 0f,
-                    animationSpec = tween(if (isSwiping) 100 else 300),
-                    label = "swipe_bg"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp, vertical = 2.dp)
-                        .background(
-                            MaterialTheme.colorScheme.error.copy(alpha = bgAlpha),
-                            RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Loeschen",
-                        modifier = Modifier.graphicsLayer { alpha = bgAlpha },
-                        tint = MaterialTheme.colorScheme.onError
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 2.dp)
+                    .background(
+                        MaterialTheme.colorScheme.error.copy(alpha = bgAlpha),
+                        RoundedCornerShape(12.dp)
                     )
-                }
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Loeschen",
+                    modifier = Modifier.graphicsLayer { alpha = bgAlpha },
+                    tint = MaterialTheme.colorScheme.onError
+                )
             }
-        ) {
-            content()
         }
+    ) {
+        content()
     }
 }
 
