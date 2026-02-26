@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -162,6 +163,7 @@ class HistoryActivity : FragmentActivity() {
                     appLockEnabled = appLockEnabled,
                     accessibilityEnabled = accessibilityEnabled.value,
                     onOpenAccessibilitySettings = { openAccessibilitySettings() },
+                    onOpenAppDetailSettings = { openAppDetailSettings() },
                     onCopyToClipboard = { text -> copyToClipboard(text) },
                     onLock = { viewModel?.lock() },
                     onRequestUnlock = { requestUnlock() },
@@ -307,6 +309,13 @@ class HistoryActivity : FragmentActivity() {
         startActivity(intent)
     }
 
+    private fun openAppDetailSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        startActivity(intent)
+    }
+
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -345,6 +354,7 @@ fun HistoryScreen(
     appLockEnabled: Boolean,
     accessibilityEnabled: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
+    onOpenAppDetailSettings: () -> Unit,
     onCopyToClipboard: (String) -> Unit,
     onLock: () -> Unit,
     onRequestUnlock: () -> Unit,
@@ -424,7 +434,10 @@ fun HistoryScreen(
         ) {
             // Setup banner if accessibility not enabled (only show when unlocked)
             if (isUnlocked && !accessibilityEnabled) {
-                SetupBanner(onOpenSettings = onOpenAccessibilitySettings)
+                SetupBanner(
+                    onOpenAccessibilitySettings = onOpenAccessibilitySettings,
+                    onOpenAppDetailSettings = onOpenAppDetailSettings
+                )
             }
 
             // Search bar (only when unlocked)
@@ -664,7 +677,10 @@ fun GuideDialog(onDismiss: () -> Unit) {
                     title = "1. Einrichtung",
                     text = "Aktiviere den Accessibility Service in den Android-Einstellungen " +
                             "(Bedienungshilfen > ClipVault). Erst dann kann ClipVault " +
-                            "Kopier-Aktionen automatisch erkennen und speichern."
+                            "Kopier-Aktionen automatisch erkennen und speichern.\n\n" +
+                            "Bei Installation per APK (nicht \u00fcber Play Store, ab Android 13): " +
+                            "\u00d6ffne zuerst die App-Info von ClipVault, tippe auf \u22ee (oben rechts) " +
+                            "und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\"."
                 )
                 GuideSection(
                     title = "2. Clips kopieren",
@@ -839,7 +855,10 @@ fun PasswordFallbackDialog(
 // --- Setup Banner ---
 
 @Composable
-fun SetupBanner(onOpenSettings: () -> Unit) {
+fun SetupBanner(
+    onOpenAccessibilitySettings: () -> Unit,
+    onOpenAppDetailSettings: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -851,24 +870,60 @@ fun SetupBanner(onOpenSettings: () -> Unit) {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Accessibility Service aktivieren",
+                "Einrichtung",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
+            // Step 1: Restricted settings (Android 13+, sideloaded APKs)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Text(
+                    "Schritt 1: Eingeschr\u00e4nkte Einstellungen erlauben",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    "Bei Installation per APK (nicht \u00fcber Play Store) blockiert Android den Accessibility Service. " +
+                            "\u00d6ffne die App-Info, tippe oben rechts auf \u22ee und w\u00e4hle " +
+                            "\"Eingeschr\u00e4nkte Einstellungen zulassen\".",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                )
+                OutlinedButton(
+                    onClick = onOpenAppDetailSettings,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("App-Info \u00f6ffnen")
+                }
+
+                Text(
+                    "Schritt 2: Accessibility Service aktivieren",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+
             Text(
-                "ClipVault benötigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. Aktiviere \"ClipVault\" in den Bedienungshilfen.",
+                "ClipVault ben\u00f6tigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. " +
+                        "Aktiviere \"ClipVault\" in den Bedienungshilfen.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
             )
-            Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = onOpenSettings,
+                onClick = onOpenAccessibilitySettings,
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 )
@@ -879,7 +934,7 @@ fun SetupBanner(onOpenSettings: () -> Unit) {
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Einstellungen öffnen")
+                Text("Bedienungshilfen \u00f6ffnen")
             }
         }
     }

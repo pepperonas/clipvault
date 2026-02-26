@@ -30,7 +30,22 @@ ClipVault funktioniert **vollständig offline**. Die App hat die INTERNET-Permis
 - **Foreground Service** mit persistenter Benachrichtigung
 - **Keine Clip-Limits** — unbegrenzte Clips speichern
 
-## Voraussetzungen
+## Installation
+
+### APK von GitHub
+
+Signierte APKs (Release + Debug) stehen auf der [Releases-Seite](https://github.com/pepperonas/clipvault/releases) zum Download bereit.
+
+**Wichtig (Android 13+):** Bei Installation per APK blockiert Android standardmäßig den Accessibility Service ("Eingeschränkte Einstellung"). So wird er freigeschaltet:
+
+1. **Einstellungen → Apps → ClipVault** öffnen
+2. Oben rechts auf **⋮** (drei Punkte) tippen
+3. **"Eingeschränkte Einstellungen zulassen"** wählen
+4. Danach den Accessibility Service unter **Bedienungshilfen → ClipVault** aktivieren
+
+> Dieser Schritt ist nur einmal pro Installation nötig und entfällt bei Installation über den Play Store.
+
+### Voraussetzungen
 
 - Android 10+ (API 29)
 - AccessibilityService-Berechtigung (für Clipboard-Überwachung)
