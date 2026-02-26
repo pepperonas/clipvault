@@ -157,17 +157,11 @@ class ClipAccessibilityService : AccessibilityService() {
         try {
             val id = repo.insert(text)
             Log.d(TAG, "Saved clip id=$id len=${text.length}")
-            withContext(Dispatchers.Main) {
-                if (id == -1L) {
+            if (id == io.celox.clipvault.data.ClipRepository.LIMIT_REACHED) {
+                withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ClipAccessibilityService,
-                        "Clip-Limit erreicht. Lizenz aktivieren fuer unbegrenzte Clips.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else if (id > 0) {
-                    Toast.makeText(
-                        this@ClipAccessibilityService,
-                        "Gespeichert: ${text.take(35)}${if (text.length > 35) "..." else ""}",
+                        "Clip-Limit erreicht",
                         Toast.LENGTH_SHORT
                     ).show()
                 }

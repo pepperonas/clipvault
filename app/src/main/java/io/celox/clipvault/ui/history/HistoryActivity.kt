@@ -1051,23 +1051,23 @@ fun SwipeToDeleteContainer(
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
-            if (it == SwipeToDismissBoxValue.EndToStart) {
+            if (it == SwipeToDismissBoxValue.EndToStart && !isDeleted) {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                isDeleted = true
                 true
             } else false
         },
         positionalThreshold = { it * 0.4f }
     )
 
-    // Delete AFTER swipe animation completes, not during gesture handling
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart && !isDeleted) {
-            isDeleted = true
+    // Trigger deletion when isDeleted is set — runs after recomposition,
+    // independent of animation state (fixes last-entry bug)
+    LaunchedEffect(isDeleted) {
+        if (isDeleted) {
             onDelete()
         }
     }
 
-    // Once deleted, hide immediately to prevent brief reappearance on recomposition
     if (!isDeleted) {
         SwipeToDismissBox(
             state = dismissState,

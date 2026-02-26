@@ -13,8 +13,8 @@ android {
         applicationId = "io.celox.clipvault"
         minSdk = 29
         targetSdk = 35
-        versionCode = 8
-        versionName = "3.3.1"
+        versionCode = 9
+        versionName = "3.4.0"
     }
 
     buildTypes {

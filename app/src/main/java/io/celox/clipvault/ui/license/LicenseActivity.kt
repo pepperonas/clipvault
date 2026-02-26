@@ -58,7 +58,6 @@ class LicenseActivity : FragmentActivity() {
                     onBack = { finish() },
                     onActivate = { email, key ->
                         if (app.licenseManager.validateAndActivate(email, key)) {
-                            Toast.makeText(this, "Lizenz aktiviert!", Toast.LENGTH_SHORT).show()
                             recreate()
                         } else {
                             Toast.makeText(this, "Ungültiger Lizenzschlüssel", Toast.LENGTH_SHORT).show()

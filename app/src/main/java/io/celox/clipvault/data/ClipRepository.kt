@@ -13,6 +13,19 @@ class ClipRepository(
     // Serialize insert operations to prevent TOCTOU race conditions
     private val insertMutex = Mutex()
 
+    // Track recently deleted content to prevent re-insertion by clipboard polling
+    @Volatile
+    private var recentlyDeletedContent: String? = null
+
+    @Volatile
+    private var recentlyDeletedTimestamp: Long = 0L
+
+    companion object {
+        const val DELETE_COOLDOWN_MS = 10_000L // 10 seconds
+        const val SKIPPED_COOLDOWN = -2L // distinct from LIMIT_REACHED (-1)
+        const val LIMIT_REACHED = -1L
+    }
+
     val allEntries: Flow<List<ClipEntry>> = dao.getAllEntries()
 
     fun search(query: String): Flow<List<ClipEntry>> = dao.search(query)
@@ -22,10 +35,16 @@ class ClipRepository(
     suspend fun getCount(): Int = dao.getCount()
 
     suspend fun insert(content: String): Long = insertMutex.withLock {
+        // Skip re-insertion of recently deleted content
+        val deleted = recentlyDeletedContent
+        if (deleted == content && System.currentTimeMillis() - recentlyDeletedTimestamp < DELETE_COOLDOWN_MS) {
+            return@withLock SKIPPED_COOLDOWN
+        }
+
         // Check clip limit for unlicensed users
         if (licenseManager != null && !licenseManager.isActivated()) {
             val count = dao.getCount()
-            if (count >= LicenseManager.getMaxFreeClips()) return@withLock -1
+            if (count >= LicenseManager.getMaxFreeClips()) return@withLock LIMIT_REACHED
         }
 
         // Avoid duplicates: don't insert if last entry has same content
@@ -42,9 +61,26 @@ class ClipRepository(
         dao.update(entry.copy(pinned = !entry.pinned))
     }
 
-    suspend fun delete(entry: ClipEntry) = dao.delete(entry)
+    suspend fun delete(entry: ClipEntry) {
+        recentlyDeletedContent = entry.content
+        recentlyDeletedTimestamp = System.currentTimeMillis()
+        dao.delete(entry)
+    }
 
-    suspend fun reInsert(entry: ClipEntry) = dao.insert(entry)
+    suspend fun reInsert(entry: ClipEntry) {
+        // Clear delete cooldown so undo works
+        recentlyDeletedContent = null
+        recentlyDeletedTimestamp = 0L
+        dao.insert(entry)
+    }
 
-    suspend fun deleteAllUnpinned() = dao.deleteAllUnpinned()
+    suspend fun deleteAllUnpinned() {
+        // Set cooldown for all content currently on clipboard
+        val latest = dao.getLatestEntry()
+        if (latest != null && !latest.pinned) {
+            recentlyDeletedContent = latest.content
+            recentlyDeletedTimestamp = System.currentTimeMillis()
+        }
+        dao.deleteAllUnpinned()
+    }
 }

@@ -7,7 +7,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](https://celox.io)
-[![Version](https://img.shields.io/badge/Version-3.3.1-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-3.4.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler App-Sperre.
 
@@ -118,6 +118,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Änderung |
 |---|---|
+| 3.4.0 | Delete-Cooldown verhindert Re-Insert durch Polling, Toast-Spam entfernt, Umlaute korrigiert, README-Badges |
 | 3.3.1 | Fix: oberster Eintrag löschbar (Swipe-Deletion nach Animation), kürzere Toasts, About-Seite mit Entwickler-Info und Website-Link |
 | 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Löschen, Fix: letzter Eintrag löschbar |
 | 3.2.0 | Undo nach Löschen, Anleitung, Bugfixes (Copy-Exception-Handling, Swipe-UX-Polish) |

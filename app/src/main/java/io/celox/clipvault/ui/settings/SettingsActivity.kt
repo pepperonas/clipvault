@@ -130,7 +130,7 @@ class SettingsActivity : FragmentActivity() {
                             appLockEnabled = true
                             passwordGenerated = true
                             biometricEnabled = true
-                            Toast.makeText(this, "App-Sperre aktiviert (Fingerprint)", Toast.LENGTH_SHORT).show()
+                            // UI feedback via toggle state change
                         },
                         onConfirmManual = { password ->
                             showAppLockDialog = false
@@ -139,7 +139,7 @@ class SettingsActivity : FragmentActivity() {
                             ksm.setAppLockEnabled(true)
                             appLockEnabled = true
                             passwordGenerated = false
-                            Toast.makeText(this, "App-Sperre aktiviert", Toast.LENGTH_SHORT).show()
+                            // UI feedback via toggle state change
                         }
                     )
                 }
@@ -156,7 +156,7 @@ class SettingsActivity : FragmentActivity() {
                                 appLockEnabled = false
                                 passwordGenerated = false
                                 biometricEnabled = ksm.isAppLockBiometricEnabled()
-                                Toast.makeText(this, "App-Sperre deaktiviert", Toast.LENGTH_SHORT).show()
+                                // UI feedback via toggle state change
                             }) {
                                 Text("Deaktivieren", color = MaterialTheme.colorScheme.error)
                             }
@@ -177,7 +177,7 @@ class SettingsActivity : FragmentActivity() {
                             val stored = ksm.retrieveAppLockPassword()
                             if (stored == oldPw) {
                                 ksm.storeAppLockPassword(newPw)
-                                Toast.makeText(this, "Passwort geändert", Toast.LENGTH_SHORT).show()
+                                // Dialog closes as confirmation
                             } else {
                                 Toast.makeText(this, "Falsches Passwort", Toast.LENGTH_SHORT).show()
                             }
