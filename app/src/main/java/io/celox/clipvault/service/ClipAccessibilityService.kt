@@ -72,7 +72,9 @@ class ClipAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
-        clipboardManager.removePrimaryClipChangedListener(clipListener)
+        if (::clipboardManager.isInitialized) {
+            clipboardManager.removePrimaryClipChangedListener(clipListener)
+        }
         serviceScope.cancel()
         Log.i(TAG, "Service destroyed")
     }

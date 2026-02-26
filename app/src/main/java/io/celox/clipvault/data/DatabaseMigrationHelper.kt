@@ -56,36 +56,33 @@ object DatabaseMigrationHelper {
     }
 
     /**
-     * Migrates an existing encrypted SQLCipher DB to an unencrypted plain DB.
-     * No-op if the DB doesn't exist or is already unencrypted.
+     * Re-encrypts an existing encrypted DB from oldPassphrase to newPassphrase.
+     * Used for migrating from user-set password (v1/v2) to auto-generated passphrase (v3).
      */
-    fun decryptIfNeeded(context: Context, passphrase: ByteArray) {
+    fun reEncryptDatabase(context: Context, oldPassphrase: ByteArray, newPassphrase: ByteArray) {
         val dbFile = context.getDatabasePath(DB_NAME)
         if (!dbFile.exists()) {
-            Log.d(TAG, "No existing DB found, skipping decryption migration")
+            Log.d(TAG, "No existing DB found, skipping re-encryption")
             return
         }
 
-        if (isUnencrypted(dbFile)) {
-            Log.d(TAG, "DB is already unencrypted, skipping decryption migration")
-            return
-        }
-
-        Log.i(TAG, "Migrating encrypted DB to plain")
-        val tempFile = File(dbFile.parentFile, "clipvault_plain.db")
+        Log.i(TAG, "Re-encrypting DB with new passphrase")
+        val tempFile = File(dbFile.parentFile, "clipvault_reencrypt.db")
 
         try {
             SQLiteDatabase.loadLibs(context)
 
-            val passphraseStr = String(passphrase, Charsets.UTF_8).replace("'", "''")
-            val encryptedDb = SQLiteDatabase.openDatabase(
-                dbFile.absolutePath, passphraseStr, null, SQLiteDatabase.OPEN_READWRITE
+            val oldStr = String(oldPassphrase, Charsets.UTF_8).replace("'", "''")
+            val newStr = String(newPassphrase, Charsets.UTF_8).replace("'", "''")
+
+            val db = SQLiteDatabase.openDatabase(
+                dbFile.absolutePath, oldStr, null, SQLiteDatabase.OPEN_READWRITE
             )
 
-            encryptedDb.rawExecSQL("ATTACH DATABASE '${tempFile.absolutePath}' AS plaintext KEY ''")
-            encryptedDb.rawExecSQL("SELECT sqlcipher_export('plaintext')")
-            encryptedDb.rawExecSQL("DETACH DATABASE plaintext")
-            encryptedDb.close()
+            db.rawExecSQL("ATTACH DATABASE '${tempFile.absolutePath}' AS reencrypted KEY '$newStr'")
+            db.rawExecSQL("SELECT sqlcipher_export('reencrypted')")
+            db.rawExecSQL("DETACH DATABASE reencrypted")
+            db.close()
 
             dbFile.delete()
             tempFile.renameTo(dbFile)
@@ -93,10 +90,11 @@ object DatabaseMigrationHelper {
             File(dbFile.absolutePath + "-wal").delete()
             File(dbFile.absolutePath + "-shm").delete()
 
-            Log.i(TAG, "Decryption migration complete")
+            Log.i(TAG, "Re-encryption complete")
         } catch (e: Exception) {
-            Log.e(TAG, "Decryption migration failed", e)
+            Log.e(TAG, "Re-encryption failed", e)
             tempFile.delete()
+            throw e
         }
     }
 

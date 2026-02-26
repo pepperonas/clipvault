@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ClipVault is an Android clipboard history manager (Kotlin, Jetpack Compose, Material 3). It uses an AccessibilityService to capture clipboard changes system-wide and stores them in a local Room database. The UI language is German.
+ClipVault is an Android clipboard history manager (Kotlin, Jetpack Compose, Material 3). It uses an AccessibilityService to capture clipboard changes system-wide and stores them in an always-encrypted Room database (SQLCipher). The UI language is German.
 
 ## Build Commands
 
@@ -36,23 +36,25 @@ Manual dependency wiring — no DI framework. `ClipVaultApp` (Application subcla
 
 1. User enables the **AccessibilityService** (`ClipAccessibilityService`) in Android settings
 2. `onServiceConnected` registers a `ClipboardManager.OnPrimaryClipChangedListener` and starts `ClipVaultService` (foreground service with persistent notification)
-3. On each clipboard change, the listener debounces (500ms same-text dedup), then inserts via `ClipRepository.insert()` which also deduplicates against the latest entry
-4. A Toast confirms capture to the user (or warns about clip limit if unlicensed)
+3. Three capture strategies: listener (primary), accessibility event polling (fallback), periodic polling every 2s (Android 16+ fallback)
+4. On each clipboard change, debounces (500ms same-text dedup), then inserts via `ClipRepository.insert()` which also deduplicates against the latest entry
 
 ### Data layer
 
 - **Room database** (`clipvault.db`, version 1, single table `clip_entries`)
-- **Dual-mode**: plain (default) or SQLCipher-encrypted (opt-in via Settings)
+- **Always encrypted** with SQLCipher (AES-256). No plain-text mode exists.
 - **ClipEntry**: `id`, `content`, `timestamp`, `pinned`
 - **ClipDao**: queries return `Flow<List<ClipEntry>>`, includes `getCount()` for license checks
 - **ClipRepository**: duplicate-check on insert + clip-limit enforcement for unlicensed users
-- **DatabaseMigrationHelper**: bidirectional migration (plain <-> encrypted)
+- **DatabaseMigrationHelper**: plain-to-encrypted migration (for upgrades from older versions)
 
 ### Security layer
 
-- **KeyStoreManager**: AES-256-GCM encryption of DB passphrase via Android KeyStore, plus SharedPreferences for encryption/biometric/license flags
-- **Encryption is optional** — toggled in Settings. When enabled: biometric unlock on resume, password fallback, auto-lock on `onStop`
-- **Biometric**: toggleable independently (only when encryption is on)
+- **KeyStoreManager**: Central security manager handling two separate concerns:
+  1. **DB passphrase**: Auto-generated 64-char passphrase, encrypted with AES-256-GCM via Android KeyStore (StrongBox preferred on API 28+). User never sees this.
+  2. **App lock**: Optional UI lock with password (user-set or auto-generated) + biometric support. Stored separately from DB passphrase.
+- **v3 migration**: On first launch after upgrade, legacy user password is adopted as DB passphrase (no re-encryption needed), and app lock settings are preserved.
+- Passphrase byte arrays are zeroed after use (`Arrays.fill(bytes, 0)`)
 
 ### Licensing
 
@@ -61,15 +63,16 @@ Manual dependency wiring — no DI framework. `ClipVaultApp` (Application subcla
 - Secret obfuscated via XOR'd byte arrays (not plain string in binary)
 - Free tier: max 10 clips. Licensed: unlimited
 - License data stored in KeyStoreManager's SharedPreferences
+- Key generator: `tools/generate-license-key.sh <email>`
 
 ### UI layer
 
 Multi-activity app with Jetpack Compose screens:
 
-- **HistoryActivity** → main clipboard history (search, pin, copy, delete, lock/unlock)
-- **SettingsActivity** → encryption toggle, password change, biometric toggle, license status, about link
-- **LicenseActivity** → email + key input with auto-formatting, activation feedback
-- **AboutActivity** → app icon, version, author, copyright
+- **HistoryActivity** — main clipboard history (search, pin, copy, delete, lock/unlock)
+- **SettingsActivity** — app lock toggle, biometric toggle, password change, license status, DB encryption info (always-on), about link
+- **LicenseActivity** — email + key input with auto-formatting, activation feedback
+- **AboutActivity** — app icon, version, author, copyright
 
 `HistoryViewModel` uses `flatMapLatest` to switch between all-entries and search-filtered flows.
 

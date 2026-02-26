@@ -1,27 +1,23 @@
 # ClipVault
 
-Android Clipboard-History-Manager mit optionaler Verschluesselung und Offline-Lizenzierung.
+Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler App-Sperre.
 
 ## Features
 
 - **Automatische Clipboard-Erfassung** via AccessibilityService (Listener + Event-Polling + Timer-Fallback)
 - **Persistente Speicherung** in lokaler Room-Datenbank
-- **Optionale Verschluesselung** der Datenbank mit SQLCipher (AES-256)
-- **Biometrische Sperre** (Fingerabdruck/Gesicht) oder Passwort-Fallback
+- **Always-On-Verschluesselung** — Datenbank immer mit SQLCipher (AES-256) verschluesselt, auto-generierte 64-Zeichen-Passphrase im Android KeyStore (StrongBox bevorzugt)
+- **Optionale App-Sperre** — Anzeige manuell sperrbar mit Fingerprint/Gesicht oder eigenem Passwort
 - **Suche, Pinnen, Loeschen** von Clips
 - **Material You** (dynamische Farben ab Android 12) mit Dark/Light-Support
 - **Offline-Lizenzierung** (HMAC-SHA256, kein Internet erforderlich)
 - **Foreground Service** mit persistenter Benachrichtigung
 
-## Screenshots
-
-*Kommt bald*
-
 ## Voraussetzungen
 
 - Android 10+ (API 29)
 - AccessibilityService-Berechtigung (fuer Clipboard-Ueberwachung)
-- Optional: Biometrische Hardware (fuer biometrische Sperre)
+- Optional: Biometrische Hardware (fuer biometrische App-Sperre)
 
 ## Build
 
@@ -40,15 +36,15 @@ Android Clipboard-History-Manager mit optionaler Verschluesselung und Offline-Li
 
 ```
 io.celox.clipvault/
-├── ClipVaultApp.kt                  # Application — DB + DI Wiring
+├── ClipVaultApp.kt                  # Application — DB immer verschluesselt oeffnen
 ├── data/
 │   ├── ClipEntry.kt                 # Room Entity
 │   ├── ClipDao.kt                   # Room DAO
-│   ├── ClipDatabase.kt              # Room DB (plain + encrypted)
+│   ├── ClipDatabase.kt              # Room DB (immer SQLCipher-verschluesselt)
 │   ├── ClipRepository.kt            # Repository + Clip-Limit
-│   └── DatabaseMigrationHelper.kt   # Plain <-> Encrypted Migration
+│   └── DatabaseMigrationHelper.kt   # Plain -> Encrypted Migration
 ├── security/
-│   └── KeyStoreManager.kt           # Android KeyStore + Prefs
+│   └── KeyStoreManager.kt           # Android KeyStore (StrongBox) + Auto-Passphrase + App-Lock
 ├── licensing/
 │   └── LicenseManager.kt            # Offline HMAC-SHA256 Validierung
 ├── service/
@@ -59,25 +55,36 @@ io.celox.clipvault/
     ├── history/
     │   ├── HistoryActivity.kt       # Hauptscreen
     │   └── HistoryViewModel.kt      # ViewModel
-    ├── settings/SettingsActivity.kt  # Einstellungen
+    ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Lizenz, Info)
     ├── license/LicenseActivity.kt   # Lizenzaktivierung
     └── about/AboutActivity.kt       # Ueber die App
 ```
 
+### Sicherheitsarchitektur
+
+Die Datenbank ist **immer verschluesselt** — es gibt keinen unverschluesselten Modus:
+
+- **DB-Passphrase**: 64 Zeichen, zufaellig generiert via `SecureRandom`, gespeichert im Android KeyStore (AES-256-GCM)
+- **StrongBox**: Auf Geraeten mit dediziertem Secure Element (z.B. Samsung S24) wird der KeyStore-Key bevorzugt dort erzeugt
+- **Byte-Zeroing**: Passphrase-Byte-Arrays werden nach Gebrauch genullt, um die Verweildauer im RAM zu minimieren
+- **App-Sperre** (optional): Rein UI-seitig — sperrt die Anzeige, nicht die Datenbank. Zwei Modi:
+  - *Fingerprint*: Auto-generiertes Passwort, Entsperrung nur via Biometrie/Geraete-PIN
+  - *Eigenes Passwort*: Manuell gesetzt, optional mit Biometrie kombinierbar
+
 ### Datenfluss
 
-1. **Clipboard-Erfassung**: AccessibilityService -> ClipRepository.insert() -> Room DB
+1. **Clipboard-Erfassung**: AccessibilityService -> ClipRepository.insert() -> verschluesselte Room DB
 2. **UI**: HistoryViewModel <- Flow<List<ClipEntry>> <- ClipDao
-3. **Verschluesselung**: ClipVaultApp.enableEncryption() -> DB schliessen -> migrieren -> encrypted oeffnen
+3. **App-Sperre**: HistoryActivity prueft `isAppLockEnabled` -> BiometricPrompt oder Passwort-Dialog
 4. **Lizenz**: LicenseManager.validateAndActivate() -> KeyStoreManager.storeLicenseData()
 
-### Dual-Mode Datenbank
+### Migration von v1/v2
 
-Die App startet standardmaessig **ohne Verschluesselung** (plain Room DB). Ueber Einstellungen kann SQLCipher-Verschluesselung aktiviert werden:
+Beim ersten Start nach dem Update auf v3 wird automatisch migriert:
 
-- **Plain → Encrypted**: DB schliessen, `sqlcipher_export` in verschluesselte DB, Passphrase in KeyStore speichern
-- **Encrypted → Plain**: DB schliessen, `sqlcipher_export` in unverschluesselte DB, Passphrase loeschen
-- **Passwort aendern**: Decrypt mit altem PW, Re-Encrypt mit neuem PW
+- **v1/v2 (verschluesselt mit User-Passwort)**: Legacy-Passwort wird als DB-Passphrase uebernommen, App-Sperre wird aktiviert
+- **v2 (unverschluesselt)**: Datenbank wird mit auto-generierter Passphrase verschluesselt
+- **Frische Installation**: Datenbank wird direkt verschluesselt erstellt
 
 ## Lizenzierung
 
@@ -86,16 +93,21 @@ Kostenlose Version: max. 10 Clips. Lizenzschluessel schaltet unbegrenzte Clips f
 - **Algorithmus**: `HMAC-SHA256(email.lowercase().trim(), secret)`
 - **Format**: `XXXX-XXXX-XXXX-XXXX` (erste 8 Bytes als Hex)
 - **Validierung**: komplett offline, kein INTERNET-Permission
+- **Key-Generierung**: `tools/generate-license-key.sh <email>`
 
 ## Versionierung
 
 Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
-- **MAJOR**: Breaking Changes (z.B. DB-Schema-Aenderung, API-Inkompatibilitaet)
+- **MAJOR**: Breaking Changes (z.B. Architektur-Aenderung)
 - **MINOR**: Neue Features (rueckwaertskompatibel)
 - **PATCH**: Bugfixes
 
-Version wird in `app/build.gradle.kts` gepflegt (`versionName` + `versionCode`).
+| Version | Aenderung |
+|---|---|
+| 3.0.0 | Always-On-Verschluesselung, App-Sperre statt optionaler DB-Verschluesselung, StrongBox |
+| 2.0.0 | Settings, Lizenzierung, optionale Verschluesselung, About |
+| 1.0.0 | Initiale Version |
 
 ## Tech Stack
 

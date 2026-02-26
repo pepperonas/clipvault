@@ -24,12 +24,6 @@ abstract class ClipDatabase : RoomDatabase() {
             }
         }
 
-        fun getInstance(context: Context): ClipDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: buildPlainDatabase(context).also { INSTANCE = it }
-            }
-        }
-
         fun closeAndReset() {
             synchronized(this) {
                 INSTANCE?.close()
@@ -45,15 +39,6 @@ abstract class ClipDatabase : RoomDatabase() {
                 DB_NAME
             )
                 .openHelperFactory(factory)
-                .build()
-        }
-
-        private fun buildPlainDatabase(context: Context): ClipDatabase {
-            return Room.databaseBuilder(
-                context.applicationContext,
-                ClipDatabase::class.java,
-                DB_NAME
-            )
                 .build()
         }
     }

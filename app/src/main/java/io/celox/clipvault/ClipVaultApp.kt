@@ -8,6 +8,7 @@ import io.celox.clipvault.data.DatabaseMigrationHelper
 import io.celox.clipvault.licensing.LicenseManager
 import io.celox.clipvault.security.KeyStoreManager
 import net.sqlcipher.database.SQLiteDatabase
+import java.util.Arrays
 
 class ClipVaultApp : Application() {
 
@@ -25,135 +26,86 @@ class ClipVaultApp : Application() {
     var repository: ClipRepository? = null
         private set
 
-    val isEncryptionEnabled: Boolean
-        get() = keyStoreManager.isEncryptionEnabled()
+    val isAppLockEnabled: Boolean
+        get() = keyStoreManager.isAppLockEnabled()
 
     override fun onCreate() {
         super.onCreate()
         SQLiteDatabase.loadLibs(this)
         keyStoreManager = KeyStoreManager(this)
         licenseManager = LicenseManager(keyStoreManager)
+
+        if (!keyStoreManager.isV3Migrated()) {
+            migrateToV3()
+        }
+
         openDatabase()
     }
 
     /**
-     * Opens the database in the appropriate mode (plain or encrypted).
-     * Always results in an open DB after this call.
+     * Migrates from v1/v2 (user-managed encryption) to v3 (always-encrypted with auto passphrase).
+     * Handles three cases:
+     * 1. DB encrypted with user password → adopt that password as the DB passphrase (no re-encryption)
+     * 2. Plain DB → encrypt with auto passphrase
+     * 3. No DB → nothing to migrate
+     */
+    private fun migrateToV3() {
+        val dbFile = getDatabasePath(ClipDatabase.DB_NAME)
+
+        try {
+            if (keyStoreManager.hasLegacyPassword()) {
+                // v1 or v2 with encryption: DB is encrypted with user password.
+                // Adopt the existing password as the DB passphrase — no re-encryption needed.
+                val legacyPassword = keyStoreManager.retrieveLegacyPassword()
+
+                if (legacyPassword != null) {
+                    Log.i(TAG, "Adopting legacy password as DB passphrase")
+                    keyStoreManager.setDbPassphrase(legacyPassword)
+
+                    // Preserve app lock from old encryption settings
+                    keyStoreManager.storeAppLockPassword(legacyPassword)
+                    keyStoreManager.setAppLockEnabled(true)
+                    keyStoreManager.setAppLockBiometricEnabled(keyStoreManager.isLegacyBiometricEnabled())
+                    keyStoreManager.setAppLockPasswordGenerated(keyStoreManager.isLegacyPasswordGenerated())
+                    Log.i(TAG, "App lock migrated from legacy encryption settings")
+                }
+
+                keyStoreManager.clearLegacyKeys()
+            } else if (dbFile.exists()) {
+                // v2 without encryption: plain DB → encrypt with auto passphrase
+                Log.i(TAG, "Migrating plain DB to auto-encrypted")
+                val autoPassphrase = keyStoreManager.getOrCreateDbPassphrase()
+                val autoBytes = autoPassphrase.toByteArray(Charsets.UTF_8)
+                DatabaseMigrationHelper.migrateIfNeeded(this, autoBytes)
+                Arrays.fill(autoBytes, 0.toByte())
+            }
+            // else: fresh install, no DB yet — getOrCreateDbPassphrase() handles it
+        } catch (e: Exception) {
+            Log.e(TAG, "V3 migration failed", e)
+            return // Don't set migrated flag, will retry next launch
+        }
+
+        keyStoreManager.setV3Migrated()
+    }
+
+    /**
+     * Opens the always-encrypted database with the auto-generated passphrase.
      */
     fun openDatabase() {
         if (database != null) return
 
-        if (keyStoreManager.isEncryptionEnabled()) {
-            val passphrase = keyStoreManager.retrievePassword()
-            if (passphrase != null) {
-                openEncryptedDatabase(passphrase)
-            } else {
-                // Encryption enabled but no password — fall back to plain
-                Log.w(TAG, "Encryption enabled but no password found, opening plain DB")
-                keyStoreManager.setEncryptionEnabled(false)
-                openPlainDatabase()
-            }
-        } else {
-            openPlainDatabase()
-        }
-    }
+        val passphrase = keyStoreManager.getOrCreateDbPassphrase()
+        val passphraseBytes = passphrase.toByteArray(Charsets.UTF_8)
 
-    /**
-     * Enables encryption: closes current DB, stores password, migrates to encrypted, reopens.
-     */
-    fun enableEncryption(passphrase: String): Boolean {
-        return try {
-            ClipDatabase.closeAndReset()
-            database = null
-            repository = null
-
-            keyStoreManager.storePassword(passphrase)
-
-            val passphraseBytes = passphrase.toByteArray(Charsets.UTF_8)
-            DatabaseMigrationHelper.migrateIfNeeded(this, passphraseBytes)
-
-            keyStoreManager.setEncryptionEnabled(true)
-            openEncryptedDatabase(passphrase)
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to enable encryption", e)
-            false
-        }
-    }
-
-    /**
-     * Disables encryption: closes current DB, decrypts, removes password, reopens plain.
-     */
-    fun disableEncryption(): Boolean {
-        return try {
-            val passphrase = keyStoreManager.retrievePassword() ?: return false
-            val passphraseBytes = passphrase.toByteArray(Charsets.UTF_8)
-
-            ClipDatabase.closeAndReset()
-            database = null
-            repository = null
-
-            DatabaseMigrationHelper.decryptIfNeeded(this, passphraseBytes)
-            keyStoreManager.clearPassword()
-
-            openPlainDatabase()
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to disable encryption", e)
-            false
-        }
-    }
-
-    /**
-     * Changes the encryption password: decrypt with old, re-encrypt with new.
-     */
-    fun changePassword(oldPassword: String, newPassword: String): Boolean {
-        return try {
-            val storedPassword = keyStoreManager.retrievePassword()
-            if (storedPassword != oldPassword) return false
-
-            val oldBytes = oldPassword.toByteArray(Charsets.UTF_8)
-
-            ClipDatabase.closeAndReset()
-            database = null
-            repository = null
-
-            // Decrypt with old password
-            DatabaseMigrationHelper.decryptIfNeeded(this, oldBytes)
-
-            // Store new password and re-encrypt
-            keyStoreManager.storePassword(newPassword)
-            val newBytes = newPassword.toByteArray(Charsets.UTF_8)
-            DatabaseMigrationHelper.migrateIfNeeded(this, newBytes)
-
-            openEncryptedDatabase(newPassword)
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to change password", e)
-            false
-        }
-    }
-
-    private fun openPlainDatabase() {
         try {
-            val db = ClipDatabase.getInstance(this)
-            database = db
-            repository = ClipRepository(db.clipDao(), licenseManager)
-            Log.i(TAG, "Plain database opened successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to open plain database", e)
-        }
-    }
-
-    private fun openEncryptedDatabase(passphrase: String) {
-        try {
-            val passphraseBytes = passphrase.toByteArray(Charsets.UTF_8)
             val db = ClipDatabase.getInstance(this, passphraseBytes)
             database = db
             repository = ClipRepository(db.clipDao(), licenseManager)
-            Log.i(TAG, "Encrypted database opened successfully")
+            Log.i(TAG, "Database opened successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to open encrypted database", e)
+            Log.e(TAG, "Failed to open database", e)
+        } finally {
+            Arrays.fill(passphraseBytes, 0.toByte())
         }
     }
 }

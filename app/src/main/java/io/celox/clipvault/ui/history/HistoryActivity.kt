@@ -108,13 +108,13 @@ class HistoryActivity : FragmentActivity() {
 
         val app = application as ClipVaultApp
 
-        // DB is always open (plain or encrypted) after App.onCreate
+        // DB is always open (always encrypted) after App.onCreate
         if (app.repository != null) {
             initViewModel(app)
         }
 
-        // If encryption is enabled, start locked; otherwise start unlocked
-        if (!app.isEncryptionEnabled) {
+        // If app lock is not enabled, start unlocked
+        if (!app.isAppLockEnabled) {
             viewModel?.unlock()
         }
 
@@ -122,14 +122,14 @@ class HistoryActivity : FragmentActivity() {
 
         setContent {
             ClipVaultTheme {
-                val isUnlocked = viewModel?.isUnlocked?.collectAsState()?.value ?: !app.isEncryptionEnabled
-                val encryptionEnabled = app.isEncryptionEnabled
+                val isUnlocked = viewModel?.isUnlocked?.collectAsState()?.value ?: !app.isAppLockEnabled
+                val appLockEnabled = app.isAppLockEnabled
                 val isLicensed = app.licenseManager.isActivated()
 
                 HistoryScreen(
                     viewModel = viewModel,
                     isUnlocked = isUnlocked,
-                    encryptionEnabled = encryptionEnabled,
+                    appLockEnabled = appLockEnabled,
                     accessibilityEnabled = accessibilityEnabled.value,
                     isLicensed = isLicensed,
                     onOpenAccessibilitySettings = { openAccessibilitySettings() },
@@ -142,7 +142,7 @@ class HistoryActivity : FragmentActivity() {
                     showPasswordFallback = showPasswordFallback.value,
                     onPasswordFallbackDismiss = { showPasswordFallback.value = false },
                     onPasswordFallbackSubmit = { password ->
-                        val stored = app.keyStoreManager.retrievePassword()
+                        val stored = app.keyStoreManager.retrieveAppLockPassword()
                         if (stored == password) {
                             showPasswordFallback.value = false
                             viewModel?.unlock()
@@ -163,14 +163,14 @@ class HistoryActivity : FragmentActivity() {
 
         val app = application as ClipVaultApp
 
-        // Re-init ViewModel if DB was reopened (e.g. after settings change)
+        // Re-init ViewModel if DB was reopened
         if (app.repository != null && viewModel == null) {
             initViewModel(app)
         }
 
-        if (app.isEncryptionEnabled && viewModel?.isUnlocked?.value != true) {
+        if (app.isAppLockEnabled && viewModel?.isUnlocked?.value != true) {
             requestUnlock()
-        } else if (!app.isEncryptionEnabled) {
+        } else if (!app.isAppLockEnabled) {
             viewModel?.unlock()
         }
     }
@@ -178,8 +178,8 @@ class HistoryActivity : FragmentActivity() {
     override fun onStop() {
         super.onStop()
         val app = application as ClipVaultApp
-        // Only auto-lock when encryption is enabled
-        if (!isChangingConfigurations && app.isEncryptionEnabled) {
+        // Only auto-lock when app lock is enabled
+        if (!isChangingConfigurations && app.isAppLockEnabled) {
             viewModel?.lock()
         }
     }
@@ -193,12 +193,18 @@ class HistoryActivity : FragmentActivity() {
 
     private fun requestUnlock() {
         val app = application as ClipVaultApp
-        if (!app.isEncryptionEnabled) {
+        if (!app.isAppLockEnabled) {
             viewModel?.unlock()
             return
         }
 
-        if (app.keyStoreManager.isBiometricEnabled()) {
+        // Generated password: always use biometric (user doesn't know the password)
+        if (app.keyStoreManager.isAppLockPasswordGenerated()) {
+            showBiometricPrompt()
+            return
+        }
+
+        if (app.keyStoreManager.isAppLockBiometricEnabled()) {
             showBiometricPrompt()
         } else {
             showPasswordFallback.value = true
@@ -214,7 +220,10 @@ class HistoryActivity : FragmentActivity() {
         )
 
         if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
-            showPasswordFallback.value = true
+            val app = application as ClipVaultApp
+            if (!app.keyStoreManager.isAppLockPasswordGenerated()) {
+                showPasswordFallback.value = true
+            }
             return
         }
 
@@ -240,7 +249,11 @@ class HistoryActivity : FragmentActivity() {
                     if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
                         errorCode == BiometricPrompt.ERROR_USER_CANCELED
                     ) {
-                        showPasswordFallback.value = true
+                        val app = application as ClipVaultApp
+                        // Generated password: no fallback possible
+                        if (!app.keyStoreManager.isAppLockPasswordGenerated()) {
+                            showPasswordFallback.value = true
+                        }
                     }
                 }
             }
@@ -290,7 +303,7 @@ class HistoryActivity : FragmentActivity() {
 fun HistoryScreen(
     viewModel: HistoryViewModel?,
     isUnlocked: Boolean,
-    encryptionEnabled: Boolean,
+    appLockEnabled: Boolean,
     accessibilityEnabled: Boolean,
     isLicensed: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
@@ -318,13 +331,13 @@ fun HistoryScreen(
                         Text("ClipVault", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                         Text(
                             when {
-                                encryptionEnabled && !isUnlocked -> "Gesperrt"
+                                appLockEnabled && !isUnlocked -> "Gesperrt"
                                 accessibilityEnabled -> "Aktiv . ${entries.size} Eintraege"
                                 else -> "Inaktiv . Accessibility aktivieren"
                             },
                             fontSize = 12.sp,
                             color = when {
-                                encryptionEnabled && !isUnlocked -> MaterialTheme.colorScheme.onSurfaceVariant
+                                appLockEnabled && !isUnlocked -> MaterialTheme.colorScheme.onSurfaceVariant
                                 accessibilityEnabled -> MaterialTheme.colorScheme.primary
                                 else -> MaterialTheme.colorScheme.error
                             }
@@ -339,12 +352,12 @@ fun HistoryScreen(
                         IconButton(onClick = { showDeleteAllDialog = true }) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = "Alle loeschen")
                         }
-                        if (encryptionEnabled) {
+                        if (appLockEnabled) {
                             IconButton(onClick = onLock) {
                                 Icon(Icons.Default.Lock, contentDescription = "Sperren")
                             }
                         }
-                    } else if (encryptionEnabled) {
+                    } else if (appLockEnabled) {
                         IconButton(onClick = onRequestUnlock) {
                             Icon(Icons.Default.LockOpen, contentDescription = "Entsperren")
                         }
@@ -393,7 +406,7 @@ fun HistoryScreen(
                 }
             }
 
-            if (encryptionEnabled && !isUnlocked) {
+            if (appLockEnabled && !isUnlocked) {
                 // Locked: show masked entries
                 if (entries.isEmpty()) {
                     LockedEmptyState(onRequestUnlock = onRequestUnlock)
