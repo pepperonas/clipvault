@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -322,10 +324,16 @@ class HistoryActivity : FragmentActivity() {
         try {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("ClipVault", text))
-            Toast.makeText(this, "Kopiert!", Toast.LENGTH_SHORT).show()
+            showBriefToast("Kopiert!")
         } catch (e: Exception) {
-            Toast.makeText(this, "Kopieren fehlgeschlagen", Toast.LENGTH_SHORT).show()
+            showBriefToast("Kopieren fehlgeschlagen")
         }
+    }
+
+    private fun showBriefToast(message: String) {
+        val toast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
+        toast.show()
+        Handler(Looper.getMainLooper()).postDelayed({ toast.cancel() }, 800)
     }
 }
 
@@ -1044,12 +1052,18 @@ fun SwipeToDeleteContainer(
         confirmValueChange = {
             if (it == SwipeToDismissBoxValue.EndToStart) {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                onDelete()
                 true
             } else false
         },
         positionalThreshold = { it * 0.4f }
     )
+
+    // Delete AFTER swipe animation completes, not during gesture handling
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDelete()
+        }
+    }
 
     SwipeToDismissBox(
         state = dismissState,

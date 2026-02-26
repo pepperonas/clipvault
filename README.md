@@ -109,6 +109,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Aenderung |
 |---|---|
+| 3.3.1 | Fix: oberster Eintrag loeschbar (Swipe-Deletion nach Animation), kuerzere Toasts, About-Seite mit Entwickler-Info und Website-Link |
 | 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Loeschen, Fix: letzter Eintrag loeschbar |
 | 3.2.0 | Undo nach Loeschen, Anleitung, Bugfixes (Copy-Exception-Handling, Swipe-UX-Polish) |
 | 3.1.1 | Clipboard-Erfassung: Mutex-Debouncing, Race-Condition-Fixes, Retry bei DB-Init, Error-Handling |
