@@ -25,7 +25,7 @@ jobs:
       - name: Decode keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: printf '%s' "$KEYSTORE_BASE64" | tr -d '\n\r ' | base64 --decode > "$GITHUB_WORKSPACE/clipvault-release.jks"
+        run: python3 -c "import base64,os; data=os.environ['KEYSTORE_BASE64'].strip(); open('$GITHUB_WORKSPACE/clipvault-release.jks','wb').write(base64.b64decode(data))"
 
       - name: Run tests
         run: ./gradlew test
