@@ -148,7 +148,7 @@ class SettingsActivity : FragmentActivity() {
                     AlertDialog(
                         onDismissRequest = { showDisableAppLockDialog = false },
                         title = { Text("App-Sperre deaktivieren?") },
-                        text = { Text("Die App ist danach ohne Authentifizierung zugaenglich. Die Datenbank bleibt verschluesselt.") },
+                        text = { Text("Die App ist danach ohne Authentifizierung zugänglich. Die Datenbank bleibt verschlüsselt.") },
                         confirmButton = {
                             TextButton(onClick = {
                                 showDisableAppLockDialog = false
@@ -177,7 +177,7 @@ class SettingsActivity : FragmentActivity() {
                             val stored = ksm.retrieveAppLockPassword()
                             if (stored == oldPw) {
                                 ksm.storeAppLockPassword(newPw)
-                                Toast.makeText(this, "Passwort geaendert", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, "Passwort geändert", Toast.LENGTH_SHORT).show()
                             } else {
                                 Toast.makeText(this, "Falsches Passwort", Toast.LENGTH_SHORT).show()
                             }
@@ -218,7 +218,7 @@ fun SettingsScreen(
                 title = { Text("Einstellungen", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurueck")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -239,7 +239,7 @@ fun SettingsScreen(
             // DB encryption info (always on, not toggleable)
             SettingsInfoItem(
                 icon = Icons.Default.Security,
-                title = "Datenbank-Verschluesselung",
+                title = "Datenbank-Verschlüsselung",
                 subtitle = "Immer aktiv (AES-256)"
             )
 
@@ -257,12 +257,12 @@ fun SettingsScreen(
             )
 
             if (appLockEnabled) {
-                // "Passwort aendern" only for manual passwords
+                // "Passwort ändern" only for manual passwords
                 if (!passwordGenerated) {
                     SettingsClickItem(
                         icon = Icons.Default.Key,
-                        title = "Passwort aendern",
-                        subtitle = "App-Sperr-Passwort aendern",
+                        title = "Passwort ändern",
+                        subtitle = "App-Sperr-Passwort ändern",
                         onClick = onChangePassword
                     )
                 }
@@ -304,7 +304,7 @@ fun SettingsScreen(
 
             SettingsClickItem(
                 icon = Icons.Default.Info,
-                title = "Ueber ClipVault",
+                title = "Über ClipVault",
                 subtitle = "Version $versionName",
                 onClick = onOpenAbout
             )
@@ -414,7 +414,7 @@ fun AppLockSetupDialog(
             Column {
                 if (!showManualFields) {
                     Text(
-                        "Waehle wie die App geschuetzt werden soll:",
+                        "Wähle wie die App geschützt werden soll:",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -435,7 +435,7 @@ fun AppLockSetupDialog(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        "Entsperre nur mit Fingerprint oder Geraete-PIN.",
+                        "Entsperre nur mit Fingerprint oder Geräte-PIN.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -482,7 +482,7 @@ fun AppLockSetupDialog(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it; error = null },
-                        label = { Text("Passwort bestaetigen") },
+                        label = { Text("Passwort bestätigen") },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -500,7 +500,7 @@ fun AppLockSetupDialog(
                 TextButton(onClick = {
                     when {
                         password.length < 4 -> error = "Mindestens 4 Zeichen"
-                        password != confirmPassword -> error = "Passwoerter stimmen nicht ueberein"
+                        password != confirmPassword -> error = "Passwörter stimmen nicht überein"
                         else -> onConfirmManual(password)
                     }
                 }) {
@@ -519,7 +519,7 @@ fun AppLockSetupDialog(
                     onDismiss()
                 }
             }) {
-                Text(if (showManualFields) "Zurueck" else "Abbrechen")
+                Text(if (showManualFields) "Zurück" else "Abbrechen")
             }
         }
     )
@@ -540,7 +540,7 @@ fun ChangePasswordDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Passwort aendern") },
+        title = { Text("Passwort ändern") },
         text = {
             Column {
                 OutlinedTextField(
@@ -571,7 +571,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it; error = null },
-                    label = { Text("Neues Passwort bestaetigen") },
+                    label = { Text("Neues Passwort bestätigen") },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -588,11 +588,11 @@ fun ChangePasswordDialog(
                 when {
                     oldPassword.isBlank() -> error = "Aktuelles Passwort eingeben"
                     newPassword.length < 4 -> error = "Mindestens 4 Zeichen"
-                    newPassword != confirmPassword -> error = "Passwoerter stimmen nicht ueberein"
+                    newPassword != confirmPassword -> error = "Passwörter stimmen nicht überein"
                     else -> onConfirm(oldPassword, newPassword)
                 }
             }) {
-                Text("Aendern")
+                Text("Ändern")
             }
         },
         dismissButton = {

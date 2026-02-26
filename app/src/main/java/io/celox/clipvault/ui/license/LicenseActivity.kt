@@ -61,7 +61,7 @@ class LicenseActivity : FragmentActivity() {
                             Toast.makeText(this, "Lizenz aktiviert!", Toast.LENGTH_SHORT).show()
                             recreate()
                         } else {
-                            Toast.makeText(this, "Ungueltiger Lizenzschluessel", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Ungültiger Lizenzschlüssel", Toast.LENGTH_SHORT).show()
                         }
                     }
                 )
@@ -88,7 +88,7 @@ fun LicenseScreen(
                 title = { Text("Lizenzaktivierung", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurueck")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -141,7 +141,7 @@ fun LicenseScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    "Gib deine Email-Adresse und deinen Lizenzschluessel ein, um alle Funktionen freizuschalten.",
+                    "Gib deine E-Mail-Adresse und deinen Lizenzschlüssel ein, um alle Funktionen freizuschalten.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -167,7 +167,7 @@ fun LicenseScreen(
                         val cleaned = newValue.uppercase().filter { it.isLetterOrDigit() }.take(16)
                         key = cleaned.chunked(4).joinToString("-")
                     },
-                    label = { Text("Lizenzschluessel") },
+                    label = { Text("Lizenzschlüssel") },
                     placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -188,7 +188,7 @@ fun LicenseScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Text(
-                    "Keinen Schluessel? Besuche celox.io",
+                    "Keinen Schlüssel? Besuche celox.io",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center

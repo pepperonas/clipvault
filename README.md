@@ -1,15 +1,24 @@
 # ClipVault
 
-Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler App-Sperre.
+[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
+[![API 29+](https://img.shields.io/badge/API-29%2B-brightgreen)](https://developer.android.com/about/versions/10)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2024.12.01-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
+[![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](https://celox.io)
+[![Version](https://img.shields.io/badge/Version-3.3.1-orange)](https://github.com/pepperonas/clipvault/releases)
+
+Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler App-Sperre.
 
 ## Features
 
-- **Zuverlaessige Clipboard-Erfassung** via AccessibilityService (Listener + Event-Polling + Timer-Fallback, Mutex-geschuetztes Debouncing)
+- **Zuverlässige Clipboard-Erfassung** via AccessibilityService (Listener + Event-Polling + Timer-Fallback, Mutex-geschütztes Debouncing)
 - **Persistente Speicherung** in lokaler Room-Datenbank
-- **Always-On-Verschluesselung** — Datenbank immer mit SQLCipher (AES-256) verschluesselt, auto-generierte 64-Zeichen-Passphrase im Android KeyStore (StrongBox bevorzugt)
+- **Always-On-Verschlüsselung** — Datenbank immer mit SQLCipher (AES-256) verschlüsselt, auto-generierte 64-Zeichen-Passphrase im Android KeyStore (StrongBox bevorzugt)
 - **Optionale App-Sperre** — Anzeige manuell sperrbar mit Fingerprint/Gesicht oder eigenem Passwort
 - **Favoriten-Accordion** — Favorisierte Clips in aufklappbarer Sektion am Listenkopf
-- **Swipe-to-Delete** mit Undo — Clips per Wisch-Geste loeschen (40%-Schwelle gegen versehentliches Loeschen), mit Rueckgaengig-Option
+- **Swipe-to-Delete** mit Undo — Clips per Wisch-Geste löschen (40%-Schwelle gegen versehentliches Löschen), mit Rückgängig-Option
 - **Content-Type-Icons** — Automatische Erkennung von Social-Media-Links (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub), URLs, E-Mails, Telefonnummern
 - **Integrierte Anleitung** — Hilfe-Dialog direkt in der App
 - **Suche** und Clip-Verwaltung
@@ -20,8 +29,8 @@ Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler 
 ## Voraussetzungen
 
 - Android 10+ (API 29)
-- AccessibilityService-Berechtigung (fuer Clipboard-Ueberwachung)
-- Optional: Biometrische Hardware (fuer biometrische App-Sperre)
+- AccessibilityService-Berechtigung (für Clipboard-Überwachung)
+- Optional: Biometrische Hardware (für biometrische App-Sperre)
 
 ## Build
 
@@ -32,7 +41,7 @@ Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler 
 # Release (minified + shrunk)
 ./gradlew assembleRelease
 
-# Auf Geraet installieren
+# Auf Gerät installieren
 ./gradlew installDebug
 ```
 
@@ -40,11 +49,11 @@ Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler 
 
 ```
 io.celox.clipvault/
-├── ClipVaultApp.kt                  # Application — DB immer verschluesselt oeffnen
+├── ClipVaultApp.kt                  # Application — DB immer verschlüsselt öffnen
 ├── data/
 │   ├── ClipEntry.kt                 # Room Entity
 │   ├── ClipDao.kt                   # Room DAO
-│   ├── ClipDatabase.kt              # Room DB (immer SQLCipher-verschluesselt)
+│   ├── ClipDatabase.kt              # Room DB (immer SQLCipher-verschlüsselt)
 │   ├── ClipRepository.kt            # Repository + Clip-Limit
 │   └── DatabaseMigrationHelper.kt   # Plain -> Encrypted Migration
 ├── security/
@@ -61,38 +70,38 @@ io.celox.clipvault/
     │   └── HistoryViewModel.kt      # ViewModel
     ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Lizenz, Info)
     ├── license/LicenseActivity.kt   # Lizenzaktivierung
-    └── about/AboutActivity.kt       # Ueber die App
+    └── about/AboutActivity.kt       # Über die App
 ```
 
 ### Sicherheitsarchitektur
 
-Die Datenbank ist **immer verschluesselt** — es gibt keinen unverschluesselten Modus:
+Die Datenbank ist **immer verschlüsselt** — es gibt keinen unverschlüsselten Modus:
 
-- **DB-Passphrase**: 64 Zeichen, zufaellig generiert via `SecureRandom`, gespeichert im Android KeyStore (AES-256-GCM)
-- **StrongBox**: Auf Geraeten mit dediziertem Secure Element (z.B. Samsung S24) wird der KeyStore-Key bevorzugt dort erzeugt
+- **DB-Passphrase**: 64 Zeichen, zufällig generiert via `SecureRandom`, gespeichert im Android KeyStore (AES-256-GCM)
+- **StrongBox**: Auf Geräten mit dediziertem Secure Element (z.B. Samsung S24) wird der KeyStore-Key bevorzugt dort erzeugt
 - **Byte-Zeroing**: Passphrase-Byte-Arrays werden nach Gebrauch genullt, um die Verweildauer im RAM zu minimieren
 - **App-Sperre** (optional): Rein UI-seitig — sperrt die Anzeige, nicht die Datenbank. Zwei Modi:
-  - *Fingerprint*: Auto-generiertes Passwort, Entsperrung nur via Biometrie/Geraete-PIN
+  - *Fingerprint*: Auto-generiertes Passwort, Entsperrung nur via Biometrie/Geräte-PIN
   - *Eigenes Passwort*: Manuell gesetzt, optional mit Biometrie kombinierbar
 
 ### Datenfluss
 
-1. **Clipboard-Erfassung**: AccessibilityService (3 Strategien, Mutex-Debouncing) -> ClipRepository.insert() (Mutex-serialisiert) -> verschluesselte Room DB
+1. **Clipboard-Erfassung**: AccessibilityService (3 Strategien, Mutex-Debouncing) -> ClipRepository.insert() (Mutex-serialisiert) -> verschlüsselte Room DB
 2. **UI**: HistoryViewModel <- Flow<List<ClipEntry>> <- ClipDao
-3. **App-Sperre**: HistoryActivity prueft `isAppLockEnabled` -> BiometricPrompt oder Passwort-Dialog
+3. **App-Sperre**: HistoryActivity prüft `isAppLockEnabled` -> BiometricPrompt oder Passwort-Dialog
 4. **Lizenz**: LicenseManager.validateAndActivate() -> KeyStoreManager.storeLicenseData()
 
 ### Migration von v1/v2
 
 Beim ersten Start nach dem Update auf v3 wird automatisch migriert:
 
-- **v1/v2 (verschluesselt mit User-Passwort)**: Legacy-Passwort wird als DB-Passphrase uebernommen, App-Sperre wird aktiviert
-- **v2 (unverschluesselt)**: Datenbank wird mit auto-generierter Passphrase verschluesselt
-- **Frische Installation**: Datenbank wird direkt verschluesselt erstellt
+- **v1/v2 (verschlüsselt mit User-Passwort)**: Legacy-Passwort wird als DB-Passphrase übernommen, App-Sperre wird aktiviert
+- **v2 (unverschlüsselt)**: Datenbank wird mit auto-generierter Passphrase verschlüsselt
+- **Frische Installation**: Datenbank wird direkt verschlüsselt erstellt
 
 ## Lizenzierung
 
-Kostenlose Version: max. 10 Clips. Lizenzschluessel schaltet unbegrenzte Clips frei.
+Kostenlose Version: max. 10 Clips. Lizenzschlüssel schaltet unbegrenzte Clips frei.
 
 - **Algorithmus**: `HMAC-SHA256(email.lowercase().trim(), secret)`
 - **Format**: `XXXX-XXXX-XXXX-XXXX` (erste 8 Bytes als Hex)
@@ -103,19 +112,19 @@ Kostenlose Version: max. 10 Clips. Lizenzschluessel schaltet unbegrenzte Clips f
 
 Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
-- **MAJOR**: Breaking Changes (z.B. Architektur-Aenderung)
-- **MINOR**: Neue Features (rueckwaertskompatibel)
+- **MAJOR**: Breaking Changes (z.B. Architektur-Änderung)
+- **MINOR**: Neue Features (rückwärtskompatibel)
 - **PATCH**: Bugfixes
 
-| Version | Aenderung |
+| Version | Änderung |
 |---|---|
-| 3.3.1 | Fix: oberster Eintrag loeschbar (Swipe-Deletion nach Animation), kuerzere Toasts, About-Seite mit Entwickler-Info und Website-Link |
-| 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Loeschen, Fix: letzter Eintrag loeschbar |
-| 3.2.0 | Undo nach Loeschen, Anleitung, Bugfixes (Copy-Exception-Handling, Swipe-UX-Polish) |
+| 3.3.1 | Fix: oberster Eintrag löschbar (Swipe-Deletion nach Animation), kürzere Toasts, About-Seite mit Entwickler-Info und Website-Link |
+| 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Löschen, Fix: letzter Eintrag löschbar |
+| 3.2.0 | Undo nach Löschen, Anleitung, Bugfixes (Copy-Exception-Handling, Swipe-UX-Polish) |
 | 3.1.1 | Clipboard-Erfassung: Mutex-Debouncing, Race-Condition-Fixes, Retry bei DB-Init, Error-Handling |
 | 3.1.0 | Favoriten-Accordion, Swipe-to-Delete, persistente Benachrichtigung |
-| 3.0.0 | Always-On-Verschluesselung, App-Sperre statt optionaler DB-Verschluesselung, StrongBox |
-| 2.0.0 | Settings, Lizenzierung, optionale Verschluesselung, About |
+| 3.0.0 | Always-On-Verschlüsselung, App-Sperre statt optionaler DB-Verschlüsselung, StrongBox |
+| 2.0.0 | Settings, Lizenzierung, optionale Verschlüsselung, About |
 | 1.0.0 | Initiale Version |
 
 ## Tech Stack

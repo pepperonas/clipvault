@@ -377,7 +377,7 @@ fun HistoryScreen(
                         Text(
                             when {
                                 appLockEnabled && !isUnlocked -> "Gesperrt"
-                                accessibilityEnabled -> "Aktiv . ${entries.size} Eintraege"
+                                accessibilityEnabled -> "Aktiv . ${entries.size} Einträge"
                                 else -> "Inaktiv . Accessibility aktivieren"
                             },
                             fontSize = 12.sp,
@@ -395,7 +395,7 @@ fun HistoryScreen(
                             Icon(Icons.Default.Search, contentDescription = "Suchen")
                         }
                         IconButton(onClick = { showDeleteAllDialog = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = "Alle loeschen")
+                            Icon(Icons.Default.DeleteSweep, contentDescription = "Alle löschen")
                         }
                         if (appLockEnabled) {
                             IconButton(onClick = onLock) {
@@ -560,8 +560,8 @@ fun HistoryScreen(
                                         viewModel?.delete(entry)
                                         scope.launch {
                                             val result = snackbarHostState.showSnackbar(
-                                                message = "Eintrag geloescht",
-                                                actionLabel = "Rueckgaengig",
+                                                message = "Eintrag gelöscht",
+                                                actionLabel = "Rückgängig",
                                                 duration = SnackbarDuration.Short
                                             )
                                             if (result == SnackbarResult.ActionPerformed) {
@@ -587,8 +587,8 @@ fun HistoryScreen(
                                 viewModel?.delete(entry)
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
-                                        message = "Eintrag geloescht",
-                                        actionLabel = "Rueckgaengig",
+                                        message = "Eintrag gelöscht",
+                                        actionLabel = "Rückgängig",
                                         duration = SnackbarDuration.Short
                                     )
                                     if (result == SnackbarResult.ActionPerformed) {
@@ -624,14 +624,14 @@ fun HistoryScreen(
     if (showDeleteAllDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
-            title = { Text("Alle loeschen?") },
-            text = { Text("Alle nicht-favorisierten Clips werden geloescht. Das kann nicht rueckgaengig gemacht werden.") },
+            title = { Text("Alle löschen?") },
+            text = { Text("Alle nicht-favorisierten Clips werden gelöscht. Das kann nicht rückgängig gemacht werden.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel?.deleteAllUnpinned()
                     showDeleteAllDialog = false
                 }) {
-                    Text("Loeschen", color = MaterialTheme.colorScheme.error)
+                    Text("Löschen", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -677,20 +677,20 @@ fun GuideDialog(onDismiss: () -> Unit) {
                 GuideSection(
                     title = "2. Clips kopieren",
                     text = "Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. " +
-                            "Langer Druck zeigt den vollstaendigen Text an."
+                            "Langer Druck zeigt den vollständigen Text an."
                 )
                 GuideSection(
                     title = "3. Favoriten",
                     text = "Tippe auf das Stern-Symbol, um einen Clip als Favorit zu markieren. " +
                             "Favoriten erscheinen in einer eigenen aufklappbaren Sektion " +
-                            "am Anfang der Liste und werden beim Loeschen aller Clips beibehalten."
+                            "am Anfang der Liste und werden beim Löschen aller Clips beibehalten."
                 )
                 GuideSection(
-                    title = "4. Loeschen",
-                    text = "Wische einen Eintrag nach links, um ihn zu loeschen. " +
-                            "Nach dem Loeschen erscheint kurz eine \"Rueckgaengig\"-Option. " +
-                            "Ueber das Papierkorb-Symbol oben kannst du alle " +
-                            "nicht-favorisierten Clips auf einmal loeschen."
+                    title = "4. Löschen",
+                    text = "Wische einen Eintrag nach links, um ihn zu löschen. " +
+                            "Nach dem Löschen erscheint kurz eine \"Rückgängig\"-Option. " +
+                            "Über das Papierkorb-Symbol oben kannst du alle " +
+                            "nicht-favorisierten Clips auf einmal löschen."
                 )
                 GuideSection(
                     title = "5. Suche",
@@ -700,8 +700,8 @@ fun GuideDialog(onDismiss: () -> Unit) {
                 GuideSection(
                     title = "6. App-Sperre",
                     text = "In den Einstellungen kannst du eine App-Sperre aktivieren. " +
-                            "Waehle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. " +
-                            "Die Sperre schuetzt die Anzeige — die Datenbank bleibt immer verschluesselt."
+                            "Wähle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. " +
+                            "Die Sperre schützt die Anzeige — die Datenbank bleibt immer verschlüsselt."
                 )
                 GuideSection(
                     title = "7. Lizenz",
@@ -762,7 +762,7 @@ fun LicenseBanner() {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "Maximal ${LicenseManager.getMaxFreeClips()} Clips in der kostenlosen Version. Aktiviere eine Lizenz in den Einstellungen fuer unbegrenzte Clips.",
+                "Maximal ${LicenseManager.getMaxFreeClips()} Clips in der kostenlosen Version. Aktiviere eine Lizenz in den Einstellungen für unbegrenzte Clips.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
@@ -909,7 +909,7 @@ fun SetupBanner(onOpenSettings: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "ClipVault benoetigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. Aktiviere \"ClipVault\" in den Bedienungshilfen.",
+                "ClipVault benötigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. Aktiviere \"ClipVault\" in den Bedienungshilfen.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
@@ -927,7 +927,7 @@ fun SetupBanner(onOpenSettings: () -> Unit) {
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Einstellungen oeffnen")
+                Text("Einstellungen öffnen")
             }
         }
     }
@@ -1090,7 +1090,7 @@ fun SwipeToDeleteContainer(
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Loeschen",
+                    contentDescription = "Löschen",
                     modifier = Modifier.graphicsLayer { alpha = bgAlpha },
                     tint = MaterialTheme.colorScheme.onError
                 )
