@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.6.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-3.7.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -136,6 +136,7 @@ This project uses [Semantic Versioning](https://semver.org/):
 
 | Version | Change |
 |---|---|
+| 3.7.0 | Fix: deleted entries no longer reappear (delete cooldown race condition), persistent notification (non-dismissible), DB recovery after reinstall |
 | 3.6.0 | Full bilingual support (English + German), all hardcoded strings externalized to string resources |
 | 3.5.0 | Open source (MIT license), in-app licensing removed (no more clip limits), unit tests added |
 | 3.4.0 | Delete cooldown prevents re-insert by polling, toast spam removed, umlauts fixed, README badges |
