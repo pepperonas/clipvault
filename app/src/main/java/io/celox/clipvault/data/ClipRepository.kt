@@ -52,9 +52,16 @@ class ClipRepository(
         dao.update(entry.copy(pinned = !entry.pinned))
     }
 
-    suspend fun delete(entry: ClipEntry) {
-        recentlyDeletedContent = entry.content
+    /**
+     * Sets delete cooldown immediately (non-suspend) so it's active
+     * before the coroutine dispatches the actual DB deletion.
+     */
+    fun setDeleteCooldown(content: String) {
+        recentlyDeletedContent = content
         recentlyDeletedTimestamp = System.currentTimeMillis()
+    }
+
+    suspend fun delete(entry: ClipEntry) {
         dao.delete(entry)
     }
 
@@ -66,12 +73,6 @@ class ClipRepository(
     }
 
     suspend fun deleteAllUnpinned() {
-        // Set cooldown for all content currently on clipboard
-        val latest = dao.getLatestEntry()
-        if (latest != null && !latest.pinned) {
-            recentlyDeletedContent = latest.content
-            recentlyDeletedTimestamp = System.currentTimeMillis()
-        }
         dao.deleteAllUnpinned()
     }
 }

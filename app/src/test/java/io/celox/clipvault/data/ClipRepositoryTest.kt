@@ -57,7 +57,7 @@ class ClipRepositoryTest {
     }
 
     @Test
-    fun `delete sets cooldown preventing re-insert`() = runTest {
+    fun `setDeleteCooldown prevents re-insert`() = runTest {
         val entry = ClipEntry(id = 1, content = "DeleteMe")
         whenever(dao.getLatestEntry()).thenReturn(null)
         whenever(dao.insert(any())).thenReturn(2L)
@@ -66,7 +66,8 @@ class ClipRepositoryTest {
         val id1 = repository.insert("DeleteMe")
         assertNotEquals(ClipRepository.SKIPPED_COOLDOWN, id1)
 
-        // Delete sets cooldown
+        // Set cooldown before delete (as ViewModel does)
+        repository.setDeleteCooldown(entry.content)
         repository.delete(entry)
         verify(dao).delete(entry)
 
@@ -81,7 +82,8 @@ class ClipRepositoryTest {
         whenever(dao.getLatestEntry()).thenReturn(null)
         whenever(dao.insert(any())).thenReturn(2L)
 
-        // Delete and verify cooldown
+        // Set cooldown and delete
+        repository.setDeleteCooldown(entry.content)
         repository.delete(entry)
         val skipped = repository.insert("UndoMe")
         assertEquals(ClipRepository.SKIPPED_COOLDOWN, skipped)
@@ -95,10 +97,12 @@ class ClipRepositoryTest {
     }
 
     @Test
-    fun `deleteAllUnpinned sets cooldown for latest entry`() = runTest {
+    fun `deleteAllUnpinned with cooldown blocks re-insert`() = runTest {
         val latest = ClipEntry(id = 3, content = "Latest", pinned = false)
         whenever(dao.getLatestEntry()).thenReturn(latest)
 
+        // Set cooldown before deleteAll (as ViewModel does)
+        repository.setDeleteCooldown(latest.content)
         repository.deleteAllUnpinned()
         verify(dao).deleteAllUnpinned()
 

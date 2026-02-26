@@ -46,6 +46,7 @@ class HistoryViewModel(private val repository: ClipRepository) : ViewModel() {
     }
 
     fun delete(entry: ClipEntry) {
+        repository.setDeleteCooldown(entry.content)
         viewModelScope.launch { repository.delete(entry) }
     }
 
@@ -54,6 +55,11 @@ class HistoryViewModel(private val repository: ClipRepository) : ViewModel() {
     }
 
     fun deleteAllUnpinned() {
+        // Set cooldown for the latest entry to prevent re-insertion by polling
+        val latest = entries.value.firstOrNull { !it.pinned }
+        if (latest != null) {
+            repository.setDeleteCooldown(latest.content)
+        }
         viewModelScope.launch { repository.deleteAllUnpinned() }
     }
 

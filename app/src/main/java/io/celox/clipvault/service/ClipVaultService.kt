@@ -63,10 +63,12 @@ class ClipVaultService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.notification_channel_name),
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = getString(R.string.notification_channel_desc)
             setShowBadge(false)
+            setSound(null, null)
+            enableVibration(false)
         }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
@@ -96,6 +98,7 @@ class ClipVaultService : Service() {
             .setContentText(getString(R.string.notification_text))
             .setSmallIcon(R.drawable.ic_clipboard)
             .setOngoing(true)
+            .setSilent(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(historyPending)
             .addAction(0, "\u23f9 " + getString(R.string.notification_stop), stopPending)
