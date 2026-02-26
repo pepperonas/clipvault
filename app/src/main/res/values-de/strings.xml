@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification / Service -->
+    <string name="notification_channel_desc">Persistente Benachrichtigung f\u00fcr den Clipboard Manager</string>
+    <string name="accessibility_service_desc">ClipVault \u00fcberwacht die Zwischenablage und speichert kopierte Inhalte automatisch in der Clip-Historie. Dieser Service ben\u00f6tigt Accessibility-Zugriff, um Clipboard-\u00c4nderungen im Hintergrund erkennen zu k\u00f6nnen.</string>
+    <string name="notification_title">ClipVault aktiv</string>
+    <string name="notification_text">Clips werden automatisch gespeichert \u00b7 Tippen f\u00fcr Historie</string>
+    <string name="notification_stop">Stoppen</string>
+
+    <!-- History - Status -->
+    <string name="status_locked">Gesperrt</string>
+    <string name="status_active">Aktiv \u00b7 %d Eintr\u00e4ge</string>
+    <string name="status_inactive">Inaktiv \u00b7 Accessibility aktivieren</string>
+
+    <!-- History - Actions -->
+    <string name="search">Suchen</string>
+    <string name="search_placeholder">Suchen\u2026</string>
+    <string name="delete_all">Alle l\u00f6schen</string>
+    <string name="lock">Sperren</string>
+    <string name="unlock">Entsperren</string>
+    <string name="guide">Anleitung</string>
+    <string name="settings">Einstellungen</string>
+    <string name="back">Zur\u00fcck</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="copied">Kopiert!</string>
+    <string name="copy_failed">Kopieren fehlgeschlagen</string>
+    <string name="wrong_password">Falsches Passwort</string>
+    <string name="favorite">Favorit</string>
+
+    <!-- History - Empty state -->
+    <string name="no_clips_yet">Noch keine Clips</string>
+    <string name="hint_copy_something">Kopiere etwas \u2014 es wird automatisch gespeichert</string>
+    <string name="hint_activate_accessibility">Aktiviere den Accessibility Service,\ndann werden Clips automatisch erfasst</string>
+
+    <!-- History - Favorites -->
+    <string name="favorites_count">Favoriten (%d)</string>
+    <string name="collapse">Zuklappen</string>
+    <string name="expand">Aufklappen</string>
+
+    <!-- History - Delete -->
+    <string name="entry_deleted">Eintrag gel\u00f6scht</string>
+    <string name="undo">R\u00fcckg\u00e4ngig</string>
+    <string name="delete_all_title">Alle l\u00f6schen?</string>
+    <string name="delete_all_message">Alle nicht-favorisierten Clips werden gel\u00f6scht. Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.</string>
+    <string name="delete_button">L\u00f6schen</string>
+
+    <!-- Content type labels -->
+    <string name="content_type_instagram">Instagram</string>
+    <string name="content_type_facebook">Facebook</string>
+    <string name="content_type_youtube">YouTube</string>
+    <string name="content_type_twitter">X</string>
+    <string name="content_type_tiktok">TikTok</string>
+    <string name="content_type_linkedin">LinkedIn</string>
+    <string name="content_type_github">GitHub</string>
+    <string name="content_type_url">Link</string>
+    <string name="content_type_email">E-Mail</string>
+    <string name="content_type_phone">Telefon</string>
+    <string name="content_type_text">Text</string>
+
+    <!-- History - Timestamps -->
+    <string name="time_just_now">Gerade eben</string>
+    <string name="time_minutes_ago">Vor %d Min.</string>
+    <string name="time_hours_ago">Vor %d Std.</string>
+
+    <!-- History - Footer -->
+    <string name="copyright_footer">(c) 2026 Martin Pfeffer | celox.io</string>
+
+    <!-- Biometric prompt -->
+    <string name="biometric_title">ClipVault entsperren</string>
+    <string name="biometric_subtitle">Authentifiziere dich, um deine Clips zu sehen</string>
+
+    <!-- Password dialog -->
+    <string name="enter_password">Passwort eingeben</string>
+    <string name="password_label">Passwort</string>
+
+    <!-- Locked state -->
+    <string name="app_locked">ClipVault ist gesperrt</string>
+    <string name="unlock_to_see_clips">Entsperre die App, um deine Clips zu sehen</string>
+
+    <!-- Guide dialog -->
+    <string name="guide_title">Anleitung</string>
+    <string name="guide_understood">Verstanden</string>
+    <string name="guide_setup_title">1. Einrichtung</string>
+    <string name="guide_setup_text">Aktiviere den Accessibility Service in den Android-Einstellungen (Bedienungshilfen > ClipVault). Erst dann kann ClipVault Kopier-Aktionen automatisch erkennen und speichern.\n\nBei Installation per APK (nicht \u00fcber Play Store, ab Android 13): \u00d6ffne zuerst die App-Info von ClipVault, tippe auf \u22ee (oben rechts) und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\".</string>
+    <string name="guide_copy_title">2. Clips kopieren</string>
+    <string name="guide_copy_text">Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. Langer Druck zeigt den vollst\u00e4ndigen Text an.</string>
+    <string name="guide_favorites_title">3. Favoriten</string>
+    <string name="guide_favorites_text">Tippe auf das Stern-Symbol, um einen Clip als Favorit zu markieren. Favoriten erscheinen in einer eigenen aufklappbaren Sektion am Anfang der Liste und werden beim L\u00f6schen aller Clips beibehalten.</string>
+    <string name="guide_delete_title">4. L\u00f6schen</string>
+    <string name="guide_delete_text">Wische einen Eintrag nach links, um ihn zu l\u00f6schen. Nach dem L\u00f6schen erscheint kurz eine \"R\u00fcckg\u00e4ngig\"-Option. \u00dcber das Papierkorb-Symbol oben kannst du alle nicht-favorisierten Clips auf einmal l\u00f6schen.</string>
+    <string name="guide_search_title">5. Suche</string>
+    <string name="guide_search_text">Tippe auf die Lupe in der oberen Leiste, um nach Clips zu suchen. Die Suche filtert in Echtzeit nach dem eingegebenen Text.</string>
+    <string name="guide_applock_title">6. App-Sperre</string>
+    <string name="guide_applock_text">In den Einstellungen kannst du eine App-Sperre aktivieren. W\u00e4hle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. Die Sperre sch\u00fctzt die Anzeige \u2014 die Datenbank bleibt immer verschl\u00fcsselt.</string>
+
+    <!-- Setup banner -->
+    <string name="setup_title">Einrichtung</string>
+    <string name="setup_step1_title">Schritt 1: Eingeschr\u00e4nkte Einstellungen erlauben</string>
+    <string name="setup_step1_text">Bei Installation per APK (nicht \u00fcber Play Store) blockiert Android den Accessibility Service. \u00d6ffne die App-Info, tippe oben rechts auf \u22ee und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\".</string>
+    <string name="setup_open_app_info">App-Info \u00f6ffnen</string>
+    <string name="setup_step2_title">Schritt 2: Accessibility Service aktivieren</string>
+    <string name="setup_accessibility_text">ClipVault ben\u00f6tigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. Aktiviere \"ClipVault\" in den Bedienungshilfen.</string>
+    <string name="setup_open_accessibility">Bedienungshilfen \u00f6ffnen</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="section_security">Sicherheit</string>
+    <string name="db_encryption_title">Datenbank-Verschl\u00fcsselung</string>
+    <string name="db_encryption_subtitle">Immer aktiv (AES-256)</string>
+    <string name="app_lock_title">App-Sperre</string>
+    <string name="app_lock_fingerprint">Gesperrt (Fingerprint)</string>
+    <string name="app_lock_password">Gesperrt (Passwort)</string>
+    <string name="app_lock_disabled">Deaktiviert</string>
+    <string name="change_password_title">Passwort \u00e4ndern</string>
+    <string name="change_password_subtitle">App-Sperr-Passwort \u00e4ndern</string>
+    <string name="biometric_lock_title">Biometrische Sperre</string>
+    <string name="biometric_always_active">Immer aktiv (automatisches Passwort)</string>
+    <string name="biometric_unlock_subtitle">Fingerabdruck/Gesicht zum Entsperren</string>
+    <string name="section_info">Info</string>
+    <string name="about_clipvault">\u00dcber ClipVault</string>
+    <string name="version_format">Version %s</string>
+
+    <!-- Disable app lock dialog -->
+    <string name="disable_applock_title">App-Sperre deaktivieren?</string>
+    <string name="disable_applock_message">Die App ist danach ohne Authentifizierung zug\u00e4nglich. Die Datenbank bleibt verschl\u00fcsselt.</string>
+    <string name="disable_button">Deaktivieren</string>
+
+    <!-- App lock setup dialog -->
+    <string name="enable_applock_title">App-Sperre aktivieren</string>
+    <string name="choose_protection">W\u00e4hle wie die App gesch\u00fctzt werden soll:</string>
+    <string name="fingerprint_option">Mit Fingerprint sichern</string>
+    <string name="fingerprint_description">Entsperre nur mit Fingerprint oder Ger\u00e4te-PIN.</string>
+    <string name="custom_password_option">Eigenes Passwort</string>
+    <string name="set_password_hint">Lege ein Passwort fest, um die App zu sperren.</string>
+    <string name="confirm_password_label">Passwort best\u00e4tigen</string>
+    <string name="error_min_length">Mindestens 4 Zeichen</string>
+    <string name="error_passwords_mismatch">Passw\u00f6rter stimmen nicht \u00fcberein</string>
+    <string name="activate_button">Aktivieren</string>
+
+    <!-- Change password dialog -->
+    <string name="current_password_label">Aktuelles Passwort</string>
+    <string name="new_password_label">Neues Passwort</string>
+    <string name="confirm_new_password_label">Neues Passwort best\u00e4tigen</string>
+    <string name="error_enter_current_password">Aktuelles Passwort eingeben</string>
+    <string name="change_button">\u00c4ndern</string>
+
+    <!-- About screen -->
+    <string name="about_title">\u00dcber ClipVault</string>
+    <string name="about_icon_description">ClipVault-Symbol</string>
+    <string name="developer_label">Entwickler</string>
+    <string name="developer_name">Martin Pfeffer</string>
+    <string name="website_url">celox.io</string>
+    <string name="copyright">&#169; 2026 Martin Pfeffer. Alle Rechte vorbehalten.</string>
+</resources>

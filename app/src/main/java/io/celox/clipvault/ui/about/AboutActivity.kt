@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -78,10 +79,10 @@ fun AboutScreen(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         topBar = {
             TopAppBar(
-                title = { Text("Über ClipVault", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.about_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -101,14 +102,14 @@ fun AboutScreen(
 
             Image(
                 painter = painterResource(id = R.drawable.ic_clipboard),
-                contentDescription = "ClipVault Icon",
+                contentDescription = stringResource(R.string.about_icon_description),
                 modifier = Modifier.size(80.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                "ClipVault",
+                stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -116,7 +117,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                "Version $versionName",
+                stringResource(R.string.version_format, versionName),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -124,7 +125,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                "Entwickler",
+                stringResource(R.string.developer_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -132,7 +133,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                "Martin Pfeffer",
+                stringResource(R.string.developer_name),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -151,7 +152,7 @@ fun AboutScreen(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "celox.io",
+                    stringResource(R.string.website_url),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     textDecoration = TextDecoration.Underline
@@ -161,7 +162,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                "(c) 2026 Martin Pfeffer. Alle Rechte vorbehalten.",
+                stringResource(R.string.copyright),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center

@@ -1,3 +1,5 @@
+🌐 [English](README.md) | [Deutsch](README.de.md)
+
 # ClipVault
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
@@ -7,53 +9,53 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.5.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-3.6.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
 </p>
 
-Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler App-Sperre.
+Android clipboard history manager with always-on encryption and optional app lock.
 
-## Keine INTERNET-Permission
+## No INTERNET Permission
 
-ClipVault funktioniert **vollständig offline**. Die App hat die INTERNET-Permission explizit entfernt (`tools:node="remove"` im Manifest). Es werden keine Daten gesendet, keine Telemetrie erfasst, keine Server kontaktiert. Deine Clipboard-Daten verlassen niemals dein Gerät.
+ClipVault works **completely offline**. The app has the INTERNET permission explicitly removed (`tools:node="remove"` in the manifest). No data is sent, no telemetry is collected, no servers are contacted. Your clipboard data never leaves your device.
 
 ## Features
 
-- **Zuverlässige Clipboard-Erfassung** via AccessibilityService (Listener + Event-Polling + Timer-Fallback, Mutex-geschütztes Debouncing)
-- **Persistente Speicherung** in lokaler Room-Datenbank
-- **Always-On-Verschlüsselung** — Datenbank immer mit SQLCipher (AES-256) verschlüsselt, auto-generierte 64-Zeichen-Passphrase im Android KeyStore (StrongBox bevorzugt)
-- **Optionale App-Sperre** — Anzeige manuell sperrbar mit Fingerprint/Gesicht oder eigenem Passwort
-- **Favoriten-Accordion** — Favorisierte Clips in aufklappbarer Sektion am Listenkopf
-- **Swipe-to-Delete** mit Undo — Clips per Wisch-Geste löschen (40%-Schwelle gegen versehentliches Löschen), mit Rückgängig-Option
-- **Content-Type-Icons** — Automatische Erkennung von Social-Media-Links (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub), URLs, E-Mails, Telefonnummern
-- **Integrierte Anleitung** — Hilfe-Dialog direkt in der App
-- **Suche** und Clip-Verwaltung
-- **Material You** (dynamische Farben ab Android 12) mit Dark/Light-Support
-- **Foreground Service** mit persistenter Benachrichtigung
-- **Keine Clip-Limits** — unbegrenzte Clips speichern
+- **Reliable clipboard capture** via AccessibilityService (listener + event polling + timer fallback, mutex-protected debouncing)
+- **Persistent storage** in a local Room database
+- **Always-on encryption** -- database always encrypted with SQLCipher (AES-256), auto-generated 64-character passphrase in Android KeyStore (StrongBox preferred)
+- **Optional app lock** -- display manually lockable with fingerprint/face or custom password
+- **Favorites accordion** -- pinned clips in a collapsible section at the top of the list
+- **Swipe-to-delete** with undo -- delete clips with a swipe gesture (40% threshold to prevent accidental deletion), with undo option
+- **Content type icons** -- automatic detection of social media links (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub), URLs, emails, phone numbers
+- **Built-in guide** -- help dialog directly in the app
+- **Search** and clip management
+- **Material You** (dynamic colors from Android 12) with dark/light support
+- **Foreground service** with persistent notification
+- **No clip limits** -- store unlimited clips
 
 ## Installation
 
-### APK von GitHub
+### APK from GitHub
 
-Signierte APKs (Release + Debug) stehen auf der [Releases-Seite](https://github.com/pepperonas/clipvault/releases) zum Download bereit.
+Signed APKs (release + debug) are available for download on the [Releases page](https://github.com/pepperonas/clipvault/releases).
 
-**Wichtig (Android 13+):** Bei Installation per APK blockiert Android standardmäßig den Accessibility Service ("Eingeschränkte Einstellung"). So wird er freigeschaltet:
+**Important (Android 13+):** When installing via APK, Android blocks the Accessibility Service by default ("Restricted setting"). Here is how to enable it:
 
-1. **Einstellungen → Apps → ClipVault** öffnen
-2. Oben rechts auf **⋮** (drei Punkte) tippen
-3. **"Eingeschränkte Einstellungen zulassen"** wählen
-4. Danach den Accessibility Service unter **Bedienungshilfen → ClipVault** aktivieren
+1. Open **Settings > Apps > ClipVault**
+2. Tap the **three-dot menu** in the top right corner
+3. Select **"Allow restricted settings"**
+4. Then enable the Accessibility Service under **Accessibility > ClipVault**
 
-> Dieser Schritt ist nur einmal pro Installation nötig und entfällt bei Installation über den Play Store.
+> This step is only required once per installation and is not needed when installing from the Play Store.
 
-### Voraussetzungen
+### Prerequisites
 
 - Android 10+ (API 29)
-- AccessibilityService-Berechtigung (für Clipboard-Überwachung)
-- Optional: Biometrische Hardware (für biometrische App-Sperre)
+- AccessibilityService permission (for clipboard monitoring)
+- Optional: Biometric hardware (for biometric app lock)
 
 ## Build
 
@@ -64,87 +66,88 @@ Signierte APKs (Release + Debug) stehen auf der [Releases-Seite](https://github.
 # Release (minified + shrunk)
 ./gradlew assembleRelease
 
-# Auf Gerät installieren
+# Install on device
 ./gradlew installDebug
 
-# Tests ausführen
+# Run tests
 ./gradlew test
 ```
 
-## Architektur
+## Architecture
 
 ```
 io.celox.clipvault/
-├── ClipVaultApp.kt                  # Application — DB immer verschlüsselt öffnen
+├── ClipVaultApp.kt                  # Application — always open DB encrypted
 ├── data/
 │   ├── ClipEntry.kt                 # Room Entity
 │   ├── ClipDao.kt                   # Room DAO
-│   ├── ClipDatabase.kt              # Room DB (immer SQLCipher-verschlüsselt)
-│   ├── ClipRepository.kt            # Repository (Dedup, Cooldown, Mutex)
+│   ├── ClipDatabase.kt              # Room DB (always SQLCipher-encrypted)
+│   ├── ClipRepository.kt            # Repository (dedup, cooldown, mutex)
 │   └── DatabaseMigrationHelper.kt   # Plain -> Encrypted Migration
 ├── security/
 │   └── KeyStoreManager.kt           # Android KeyStore (StrongBox) + Auto-Passphrase + App-Lock
 ├── service/
-│   ├── ClipAccessibilityService.kt  # Clipboard-Capture (3 Strategien)
+│   ├── ClipAccessibilityService.kt  # Clipboard capture (3 strategies)
 │   └── ClipVaultService.kt          # Foreground Service
 └── ui/
     ├── theme/Theme.kt               # Material 3 Theme
     ├── history/
-    │   ├── HistoryActivity.kt       # Hauptscreen
+    │   ├── HistoryActivity.kt       # Main screen
     │   └── HistoryViewModel.kt      # ViewModel
-    ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Info)
-    └── about/AboutActivity.kt       # Über die App
+    ├── settings/SettingsActivity.kt  # Settings (app lock, info)
+    └── about/AboutActivity.kt       # About the app
 ```
 
-### Sicherheitsarchitektur
+### Security Architecture
 
-Die Datenbank ist **immer verschlüsselt** — es gibt keinen unverschlüsselten Modus:
+The database is **always encrypted** -- there is no unencrypted mode:
 
-- **DB-Passphrase**: 64 Zeichen, zufällig generiert via `SecureRandom`, gespeichert im Android KeyStore (AES-256-GCM)
-- **StrongBox**: Auf Geräten mit dediziertem Secure Element (z.B. Samsung S24) wird der KeyStore-Key bevorzugt dort erzeugt
-- **Byte-Zeroing**: Passphrase-Byte-Arrays werden nach Gebrauch genullt, um die Verweildauer im RAM zu minimieren
-- **App-Sperre** (optional): Rein UI-seitig — sperrt die Anzeige, nicht die Datenbank. Zwei Modi:
-  - *Fingerprint*: Auto-generiertes Passwort, Entsperrung nur via Biometrie/Geräte-PIN
-  - *Eigenes Passwort*: Manuell gesetzt, optional mit Biometrie kombinierbar
+- **DB passphrase**: 64 characters, randomly generated via `SecureRandom`, stored in Android KeyStore (AES-256-GCM)
+- **StrongBox**: On devices with a dedicated Secure Element (e.g. Samsung S24), the KeyStore key is preferentially generated there
+- **Byte zeroing**: Passphrase byte arrays are zeroed after use to minimize their time in RAM
+- **App lock** (optional): UI-level only -- locks the display, not the database. Two modes:
+  - *Fingerprint*: Auto-generated password, unlock only via biometrics/device PIN
+  - *Custom password*: Manually set, optionally combinable with biometrics
 
-### Datenfluss
+### Data Flow
 
-1. **Clipboard-Erfassung**: AccessibilityService (3 Strategien, Mutex-Debouncing) -> ClipRepository.insert() (Mutex-serialisiert) -> verschlüsselte Room DB
+1. **Clipboard capture**: AccessibilityService (3 strategies, mutex debouncing) -> ClipRepository.insert() (mutex-serialized) -> encrypted Room DB
 2. **UI**: HistoryViewModel <- Flow<List<ClipEntry>> <- ClipDao
-3. **App-Sperre**: HistoryActivity prüft `isAppLockEnabled` -> BiometricPrompt oder Passwort-Dialog
+3. **App lock**: HistoryActivity checks `isAppLockEnabled` -> BiometricPrompt or password dialog
 
-### Migration von v1/v2
+### Migration from v1/v2
 
-Beim ersten Start nach dem Update auf v3 wird automatisch migriert:
+On the first launch after updating to v3, automatic migration is performed:
 
-- **v1/v2 (verschlüsselt mit User-Passwort)**: Legacy-Passwort wird als DB-Passphrase übernommen, App-Sperre wird aktiviert
-- **v2 (unverschlüsselt)**: Datenbank wird mit auto-generierter Passphrase verschlüsselt
-- **Frische Installation**: Datenbank wird direkt verschlüsselt erstellt
+- **v1/v2 (encrypted with user password)**: Legacy password is adopted as DB passphrase, app lock is activated
+- **v2 (unencrypted)**: Database is encrypted with an auto-generated passphrase
+- **Fresh install**: Database is created encrypted from the start
 
-## Versionierung
+## Versioning
 
-Das Projekt verwendet [Semantic Versioning](https://semver.org/):
+This project uses [Semantic Versioning](https://semver.org/):
 
-- **MAJOR**: Breaking Changes (z.B. Architektur-Änderung)
-- **MINOR**: Neue Features (rückwärtskompatibel)
-- **PATCH**: Bugfixes
+- **MAJOR**: Breaking changes (e.g. architecture overhaul)
+- **MINOR**: New features (backward-compatible)
+- **PATCH**: Bug fixes
 
-| Version | Änderung |
+| Version | Change |
 |---|---|
-| 3.5.0 | Open Source (MIT-Lizenz), In-App-Lizenzierung entfernt (keine Clip-Limits mehr), Unit-Tests hinzugefügt |
-| 3.4.0 | Delete-Cooldown verhindert Re-Insert durch Polling, Toast-Spam entfernt, Umlaute korrigiert, README-Badges |
-| 3.3.1 | Fix: oberster Eintrag löschbar (Swipe-Deletion nach Animation), kürzere Toasts, About-Seite mit Entwickler-Info und Website-Link |
-| 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Löschen, Fix: letzter Eintrag löschbar |
-| 3.2.0 | Undo nach Löschen, Anleitung, Bugfixes (Copy-Exception-Handling, Swipe-UX-Polish) |
-| 3.1.1 | Clipboard-Erfassung: Mutex-Debouncing, Race-Condition-Fixes, Retry bei DB-Init, Error-Handling |
-| 3.1.0 | Favoriten-Accordion, Swipe-to-Delete, persistente Benachrichtigung |
-| 3.0.0 | Always-On-Verschlüsselung, App-Sperre statt optionaler DB-Verschlüsselung, StrongBox |
-| 2.0.0 | Settings, Lizenzierung, optionale Verschlüsselung, About |
-| 1.0.0 | Initiale Version |
+| 3.6.0 | Full bilingual support (English + German), all hardcoded strings externalized to string resources |
+| 3.5.0 | Open source (MIT license), in-app licensing removed (no more clip limits), unit tests added |
+| 3.4.0 | Delete cooldown prevents re-insert by polling, toast spam removed, umlauts fixed, README badges |
+| 3.3.1 | Fix: top entry deletable (swipe deletion after animation), shorter toasts, about page with developer info and website link |
+| 3.3.0 | Content type icons (social media, URL, email, phone), 40% swipe threshold to prevent accidental deletion, fix: last entry deletable |
+| 3.2.0 | Undo after delete, built-in guide, bug fixes (copy exception handling, swipe UX polish) |
+| 3.1.1 | Clipboard capture: mutex debouncing, race condition fixes, retry on DB init, error handling |
+| 3.1.0 | Favorites accordion, swipe-to-delete, persistent notification |
+| 3.0.0 | Always-on encryption, app lock instead of optional DB encryption, StrongBox |
+| 2.0.0 | Settings, licensing, optional encryption, about |
+| 1.0.0 | Initial release |
 
 ## Tech Stack
 
-| Komponente | Version |
+| Component | Version |
 |---|---|
 | Kotlin | 2.0.21 |
 | Jetpack Compose BOM | 2024.12.01 |
@@ -156,10 +159,10 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 | minSdk | 29 (Android 10) |
 | targetSdk | 35 |
 
-## Autor
+## Author
 
-**Martin Pfeffer** — [celox.io](https://celox.io)
+**Martin Pfeffer** -- [celox.io](https://celox.io)
 
-## Lizenz
+## License
 
-MIT License — siehe [LICENSE](LICENSE).
+MIT License -- see [LICENSE](LICENSE).

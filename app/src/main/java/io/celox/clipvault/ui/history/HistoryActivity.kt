@@ -96,6 +96,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -109,10 +110,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
+import io.celox.clipvault.R
 import io.celox.clipvault.ClipVaultApp
 import io.celox.clipvault.data.ClipEntry
 import io.celox.clipvault.service.ClipAccessibilityService
@@ -179,7 +182,7 @@ class HistoryActivity : FragmentActivity() {
                             viewModel?.unlock()
                         } else {
                             Toast.makeText(
-                                this, "Falsches Passwort", Toast.LENGTH_SHORT
+                                this, getString(R.string.wrong_password), Toast.LENGTH_SHORT
                             ).show()
                         }
                     }
@@ -259,8 +262,8 @@ class HistoryActivity : FragmentActivity() {
         }
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("ClipVault entsperren")
-            .setSubtitle("Authentifiziere dich, um deine Clips zu sehen")
+            .setTitle(getString(R.string.biometric_title))
+            .setSubtitle(getString(R.string.biometric_subtitle))
             .setAllowedAuthenticators(
                 BiometricManager.Authenticators.BIOMETRIC_STRONG or
                         BiometricManager.Authenticators.BIOMETRIC_WEAK or
@@ -331,9 +334,9 @@ class HistoryActivity : FragmentActivity() {
         try {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("ClipVault", text))
-            showBriefToast("Kopiert!")
+            showBriefToast(getString(R.string.copied))
         } catch (e: Exception) {
-            showBriefToast("Kopieren fehlgeschlagen")
+            showBriefToast(getString(R.string.copy_failed))
         }
     }
 
@@ -372,6 +375,8 @@ fun HistoryScreen(
     var showGuide by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val deletedMsg = stringResource(R.string.entry_deleted)
+    val undoLabel = stringResource(R.string.undo)
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
@@ -380,12 +385,12 @@ fun HistoryScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("ClipVault", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 20.sp)
                         Text(
                             when {
-                                appLockEnabled && !isUnlocked -> "Gesperrt"
-                                accessibilityEnabled -> "Aktiv . ${entries.size} Einträge"
-                                else -> "Inaktiv . Accessibility aktivieren"
+                                appLockEnabled && !isUnlocked -> stringResource(R.string.status_locked)
+                                accessibilityEnabled -> stringResource(R.string.status_active, entries.size)
+                                else -> stringResource(R.string.status_inactive)
                             },
                             fontSize = 12.sp,
                             color = when {
@@ -399,26 +404,26 @@ fun HistoryScreen(
                 actions = {
                     if (isUnlocked) {
                         IconButton(onClick = { showSearch = !showSearch }) {
-                            Icon(Icons.Default.Search, contentDescription = "Suchen")
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                         }
                         IconButton(onClick = { showDeleteAllDialog = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = "Alle löschen")
+                            Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.delete_all))
                         }
                         if (appLockEnabled) {
                             IconButton(onClick = onLock) {
-                                Icon(Icons.Default.Lock, contentDescription = "Sperren")
+                                Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.lock))
                             }
                         }
                     } else if (appLockEnabled) {
                         IconButton(onClick = onRequestUnlock) {
-                            Icon(Icons.Default.LockOpen, contentDescription = "Entsperren")
+                            Icon(Icons.Default.LockOpen, contentDescription = stringResource(R.string.unlock))
                         }
                     }
                     IconButton(onClick = { showGuide = true }) {
-                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Anleitung")
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = stringResource(R.string.guide))
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Einstellungen")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -449,7 +454,7 @@ fun HistoryScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                        placeholder = { Text("Suchen...") },
+                        placeholder = { Text(stringResource(R.string.search_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         leadingIcon = {
@@ -479,19 +484,19 @@ fun HistoryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("clipboard emoji", fontSize = 48.sp)
+                        Text("\uD83D\uDCCB", fontSize = 48.sp)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Noch keine Clips",
+                            stringResource(R.string.no_clips_yet),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             if (accessibilityEnabled)
-                                "Kopiere etwas -- es wird automatisch gespeichert"
+                                stringResource(R.string.hint_copy_something)
                             else
-                                "Aktiviere den Accessibility Service,\ndann werden Clips automatisch erfasst",
+                                stringResource(R.string.hint_activate_accessibility),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -540,7 +545,7 @@ fun HistoryScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "Favoriten (${favorites.size})",
+                                        stringResource(R.string.favorites_count, favorites.size),
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -548,7 +553,7 @@ fun HistoryScreen(
                                     Spacer(modifier = Modifier.weight(1f))
                                     Icon(
                                         Icons.Default.KeyboardArrowDown,
-                                        contentDescription = if (favoritesExpanded) "Zuklappen" else "Aufklappen",
+                                        contentDescription = if (favoritesExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
                                         modifier = Modifier
                                             .size(24.dp)
                                             .rotate(chevronRotation),
@@ -565,8 +570,8 @@ fun HistoryScreen(
                                         viewModel?.delete(entry)
                                         scope.launch {
                                             val result = snackbarHostState.showSnackbar(
-                                                message = "Eintrag gelöscht",
-                                                actionLabel = "Rückgängig",
+                                                message = deletedMsg,
+                                                actionLabel = undoLabel,
                                                 duration = SnackbarDuration.Short
                                             )
                                             if (result == SnackbarResult.ActionPerformed) {
@@ -592,8 +597,8 @@ fun HistoryScreen(
                                 viewModel?.delete(entry)
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
-                                        message = "Eintrag gelöscht",
-                                        actionLabel = "Rückgängig",
+                                        message = deletedMsg,
+                                        actionLabel = undoLabel,
                                         duration = SnackbarDuration.Short
                                     )
                                     if (result == SnackbarResult.ActionPerformed) {
@@ -612,7 +617,7 @@ fun HistoryScreen(
 
                     item(key = "footer") {
                         Text(
-                            "(c) 2026 Martin Pfeffer | celox.io",
+                            stringResource(R.string.copyright_footer),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
@@ -629,19 +634,19 @@ fun HistoryScreen(
     if (showDeleteAllDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
-            title = { Text("Alle löschen?") },
-            text = { Text("Alle nicht-favorisierten Clips werden gelöscht. Das kann nicht rückgängig gemacht werden.") },
+            title = { Text(stringResource(R.string.delete_all_title)) },
+            text = { Text(stringResource(R.string.delete_all_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel?.deleteAllUnpinned()
                     showDeleteAllDialog = false
                 }) {
-                    Text("Löschen", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete_button), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteAllDialog = false }) {
-                    Text("Abbrechen")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -666,7 +671,7 @@ fun GuideDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Anleitung", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.guide_title), fontWeight = FontWeight.Bold)
         },
         text = {
             Column(
@@ -674,48 +679,34 @@ fun GuideDialog(onDismiss: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 GuideSection(
-                    title = "1. Einrichtung",
-                    text = "Aktiviere den Accessibility Service in den Android-Einstellungen " +
-                            "(Bedienungshilfen > ClipVault). Erst dann kann ClipVault " +
-                            "Kopier-Aktionen automatisch erkennen und speichern.\n\n" +
-                            "Bei Installation per APK (nicht \u00fcber Play Store, ab Android 13): " +
-                            "\u00d6ffne zuerst die App-Info von ClipVault, tippe auf \u22ee (oben rechts) " +
-                            "und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\"."
+                    title = stringResource(R.string.guide_setup_title),
+                    text = stringResource(R.string.guide_setup_text)
                 )
                 GuideSection(
-                    title = "2. Clips kopieren",
-                    text = "Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. " +
-                            "Langer Druck zeigt den vollständigen Text an."
+                    title = stringResource(R.string.guide_copy_title),
+                    text = stringResource(R.string.guide_copy_text)
                 )
                 GuideSection(
-                    title = "3. Favoriten",
-                    text = "Tippe auf das Stern-Symbol, um einen Clip als Favorit zu markieren. " +
-                            "Favoriten erscheinen in einer eigenen aufklappbaren Sektion " +
-                            "am Anfang der Liste und werden beim Löschen aller Clips beibehalten."
+                    title = stringResource(R.string.guide_favorites_title),
+                    text = stringResource(R.string.guide_favorites_text)
                 )
                 GuideSection(
-                    title = "4. Löschen",
-                    text = "Wische einen Eintrag nach links, um ihn zu löschen. " +
-                            "Nach dem Löschen erscheint kurz eine \"Rückgängig\"-Option. " +
-                            "Über das Papierkorb-Symbol oben kannst du alle " +
-                            "nicht-favorisierten Clips auf einmal löschen."
+                    title = stringResource(R.string.guide_delete_title),
+                    text = stringResource(R.string.guide_delete_text)
                 )
                 GuideSection(
-                    title = "5. Suche",
-                    text = "Tippe auf die Lupe in der oberen Leiste, um nach Clips zu suchen. " +
-                            "Die Suche filtert in Echtzeit nach dem eingegebenen Text."
+                    title = stringResource(R.string.guide_search_title),
+                    text = stringResource(R.string.guide_search_text)
                 )
                 GuideSection(
-                    title = "6. App-Sperre",
-                    text = "In den Einstellungen kannst du eine App-Sperre aktivieren. " +
-                            "Wähle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. " +
-                            "Die Sperre schützt die Anzeige — die Datenbank bleibt immer verschlüsselt."
+                    title = stringResource(R.string.guide_applock_title),
+                    text = stringResource(R.string.guide_applock_text)
                 )
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Verstanden")
+                Text(stringResource(R.string.guide_understood))
             }
         }
     )
@@ -756,20 +747,20 @@ fun LockedEmptyState(onRequestUnlock: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "ClipVault ist gesperrt",
+                stringResource(R.string.app_locked),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Entsperre die App, um deine Clips zu sehen",
+                stringResource(R.string.unlock_to_see_clips),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(onClick = onRequestUnlock) {
-                Text("Entsperren")
+                Text(stringResource(R.string.unlock))
             }
         }
     }
@@ -792,7 +783,7 @@ fun LockedClipEntryCard(entry: ClipEntry) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                text = formatTimestamp(entry.timestamp),
+                text = formatTimestamp(LocalContext.current, entry.timestamp),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -818,12 +809,12 @@ fun PasswordFallbackDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Passwort eingeben") },
+        title = { Text(stringResource(R.string.enter_password)) },
         text = {
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Passwort") },
+                label = { Text(stringResource(R.string.password_label)) },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
@@ -841,12 +832,12 @@ fun PasswordFallbackDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSubmit(password) }) {
-                Text("Entsperren")
+                Text(stringResource(R.string.unlock))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -873,7 +864,7 @@ fun SetupBanner(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Einrichtung",
+                stringResource(R.string.setup_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer
@@ -882,15 +873,13 @@ fun SetupBanner(
             // Step 1: Restricted settings (Android 13+, sideloaded APKs)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Text(
-                    "Schritt 1: Eingeschr\u00e4nkte Einstellungen erlauben",
+                    stringResource(R.string.setup_step1_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
                 Text(
-                    "Bei Installation per APK (nicht \u00fcber Play Store) blockiert Android den Accessibility Service. " +
-                            "\u00d6ffne die App-Info, tippe oben rechts auf \u22ee und w\u00e4hle " +
-                            "\"Eingeschr\u00e4nkte Einstellungen zulassen\".",
+                    stringResource(R.string.setup_step1_text),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
                 )
@@ -904,11 +893,11 @@ fun SetupBanner(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("App-Info \u00f6ffnen")
+                    Text(stringResource(R.string.setup_open_app_info))
                 }
 
                 Text(
-                    "Schritt 2: Accessibility Service aktivieren",
+                    stringResource(R.string.setup_step2_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onErrorContainer
@@ -916,8 +905,7 @@ fun SetupBanner(
             }
 
             Text(
-                "ClipVault ben\u00f6tigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. " +
-                        "Aktiviere \"ClipVault\" in den Bedienungshilfen.",
+                stringResource(R.string.setup_accessibility_text),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
             )
@@ -934,7 +922,7 @@ fun SetupBanner(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Bedienungshilfen \u00f6ffnen")
+                Text(stringResource(R.string.setup_open_accessibility))
             }
         }
     }
@@ -942,18 +930,18 @@ fun SetupBanner(
 
 // --- Content Type Detection ---
 
-private enum class ContentType(val icon: ImageVector, val color: Color, val label: String) {
-    INSTAGRAM(Icons.Default.Link, Color(0xFFE1306C), "Instagram"),
-    FACEBOOK(Icons.Default.Link, Color(0xFF1877F2), "Facebook"),
-    YOUTUBE(Icons.Default.PlayCircle, Color(0xFFFF0000), "YouTube"),
-    TWITTER(Icons.Default.Link, Color(0xFF000000), "X"),
-    TIKTOK(Icons.Default.Link, Color(0xFF010101), "TikTok"),
-    LINKEDIN(Icons.Default.Link, Color(0xFF0A66C2), "LinkedIn"),
-    GITHUB(Icons.Default.Code, Color(0xFF333333), "GitHub"),
-    URL(Icons.Default.Link, Color(0xFF666666), "Link"),
-    EMAIL(Icons.Default.AlternateEmail, Color(0xFF4285F4), "E-Mail"),
-    PHONE(Icons.Default.Phone, Color(0xFF34A853), "Telefon"),
-    TEXT(Icons.AutoMirrored.Filled.Notes, Color(0xFF999999), "Text")
+private enum class ContentType(val icon: ImageVector, val color: Color, val labelRes: Int) {
+    INSTAGRAM(Icons.Default.Link, Color(0xFFE1306C), R.string.content_type_instagram),
+    FACEBOOK(Icons.Default.Link, Color(0xFF1877F2), R.string.content_type_facebook),
+    YOUTUBE(Icons.Default.PlayCircle, Color(0xFFFF0000), R.string.content_type_youtube),
+    TWITTER(Icons.Default.Link, Color(0xFF000000), R.string.content_type_twitter),
+    TIKTOK(Icons.Default.Link, Color(0xFF010101), R.string.content_type_tiktok),
+    LINKEDIN(Icons.Default.Link, Color(0xFF0A66C2), R.string.content_type_linkedin),
+    GITHUB(Icons.Default.Code, Color(0xFF333333), R.string.content_type_github),
+    URL(Icons.Default.Link, Color(0xFF666666), R.string.content_type_url),
+    EMAIL(Icons.Default.AlternateEmail, Color(0xFF4285F4), R.string.content_type_email),
+    PHONE(Icons.Default.Phone, Color(0xFF34A853), R.string.content_type_phone),
+    TEXT(Icons.AutoMirrored.Filled.Notes, Color(0xFF999999), R.string.content_type_text)
 }
 
 private fun detectContentType(content: String): ContentType {
@@ -976,7 +964,7 @@ private fun detectContentType(content: String): ContentType {
 private fun ContentTypeIcon(contentType: ContentType, modifier: Modifier = Modifier) {
     Icon(
         imageVector = contentType.icon,
-        contentDescription = contentType.label,
+        contentDescription = stringResource(contentType.labelRes),
         modifier = modifier.size(18.dp),
         tint = contentType.color
     )
@@ -1017,7 +1005,7 @@ fun ClipEntryCard(
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = formatTimestamp(entry.timestamp),
+                text = formatTimestamp(LocalContext.current, entry.timestamp),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -1033,7 +1021,7 @@ fun ClipEntryCard(
         IconButton(onClick = onToggleFavorite, modifier = Modifier.size(40.dp)) {
             Icon(
                 if (entry.pinned) Icons.Filled.Star else Icons.Outlined.Star,
-                contentDescription = "Favorit",
+                contentDescription = stringResource(R.string.favorite),
                 modifier = Modifier.size(20.dp),
                 tint = if (entry.pinned)
                     MaterialTheme.colorScheme.primary
@@ -1100,7 +1088,7 @@ fun SwipeToDeleteContainer(
                 ) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Löschen",
+                        contentDescription = stringResource(R.string.delete_button),
                         modifier = Modifier.graphicsLayer { alpha = bgAlpha },
                         tint = MaterialTheme.colorScheme.onError
                     )
@@ -1114,16 +1102,16 @@ fun SwipeToDeleteContainer(
 
 // --- Helpers ---
 
-private fun formatTimestamp(timestamp: Long): String {
+private fun formatTimestamp(context: Context, timestamp: Long): String {
     val now = System.currentTimeMillis()
     val diff = now - timestamp
 
     return when {
-        diff < 60_000 -> "Gerade eben"
-        diff < 3_600_000 -> "Vor ${diff / 60_000} Min."
-        diff < 86_400_000 -> "Vor ${diff / 3_600_000} Std."
+        diff < 60_000 -> context.getString(R.string.time_just_now)
+        diff < 3_600_000 -> context.getString(R.string.time_minutes_ago, diff / 60_000)
+        diff < 86_400_000 -> context.getString(R.string.time_hours_ago, diff / 3_600_000)
         else -> {
-            val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
+            val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
             sdf.format(Date(timestamp))
         }
     }

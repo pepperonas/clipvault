@@ -58,10 +58,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import io.celox.clipvault.ClipVaultApp
+import io.celox.clipvault.R
 import io.celox.clipvault.ui.about.AboutActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
 import java.security.SecureRandom
@@ -140,8 +142,8 @@ class SettingsActivity : FragmentActivity() {
                 if (showDisableAppLockDialog) {
                     AlertDialog(
                         onDismissRequest = { showDisableAppLockDialog = false },
-                        title = { Text("App-Sperre deaktivieren?") },
-                        text = { Text("Die App ist danach ohne Authentifizierung zugänglich. Die Datenbank bleibt verschlüsselt.") },
+                        title = { Text(stringResource(R.string.disable_applock_title)) },
+                        text = { Text(stringResource(R.string.disable_applock_message)) },
                         confirmButton = {
                             TextButton(onClick = {
                                 showDisableAppLockDialog = false
@@ -151,12 +153,12 @@ class SettingsActivity : FragmentActivity() {
                                 biometricEnabled = ksm.isAppLockBiometricEnabled()
                                 // UI feedback via toggle state change
                             }) {
-                                Text("Deaktivieren", color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(R.string.disable_button), color = MaterialTheme.colorScheme.error)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDisableAppLockDialog = false }) {
-                                Text("Abbrechen")
+                                Text(stringResource(R.string.cancel))
                             }
                         }
                     )
@@ -172,7 +174,7 @@ class SettingsActivity : FragmentActivity() {
                                 ksm.storeAppLockPassword(newPw)
                                 // Dialog closes as confirmation
                             } else {
-                                Toast.makeText(this, "Falsches Passwort", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.wrong_password), Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
@@ -205,10 +207,10 @@ fun SettingsScreen(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         topBar = {
             TopAppBar(
-                title = { Text("Einstellungen", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -224,23 +226,23 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // --- Security Section ---
-            SectionHeader("Sicherheit")
+            SectionHeader(stringResource(R.string.section_security))
 
             // DB encryption info (always on, not toggleable)
             SettingsInfoItem(
                 icon = Icons.Default.Security,
-                title = "Datenbank-Verschlüsselung",
-                subtitle = "Immer aktiv (AES-256)"
+                title = stringResource(R.string.db_encryption_title),
+                subtitle = stringResource(R.string.db_encryption_subtitle)
             )
 
             // App lock toggle
             SettingsToggleItem(
                 icon = Icons.Default.Lock,
-                title = "App-Sperre",
+                title = stringResource(R.string.app_lock_title),
                 subtitle = when {
-                    appLockEnabled && passwordGenerated -> "Gesperrt (Fingerprint)"
-                    appLockEnabled -> "Gesperrt (Passwort)"
-                    else -> "Deaktiviert"
+                    appLockEnabled && passwordGenerated -> stringResource(R.string.app_lock_fingerprint)
+                    appLockEnabled -> stringResource(R.string.app_lock_password)
+                    else -> stringResource(R.string.app_lock_disabled)
                 },
                 checked = appLockEnabled,
                 onCheckedChange = onToggleAppLock
@@ -251,8 +253,8 @@ fun SettingsScreen(
                 if (!passwordGenerated) {
                     SettingsClickItem(
                         icon = Icons.Default.Key,
-                        title = "Passwort ändern",
-                        subtitle = "App-Sperr-Passwort ändern",
+                        title = stringResource(R.string.change_password_title),
+                        subtitle = stringResource(R.string.change_password_subtitle),
                         onClick = onChangePassword
                     )
                 }
@@ -261,14 +263,14 @@ fun SettingsScreen(
                 if (passwordGenerated) {
                     SettingsInfoItem(
                         icon = Icons.Default.Fingerprint,
-                        title = "Biometrische Sperre",
-                        subtitle = "Immer aktiv (automatisches Passwort)"
+                        title = stringResource(R.string.biometric_lock_title),
+                        subtitle = stringResource(R.string.biometric_always_active)
                     )
                 } else {
                     SettingsToggleItem(
                         icon = Icons.Default.Fingerprint,
-                        title = "Biometrische Sperre",
-                        subtitle = if (biometricEnabled) "Fingerabdruck/Gesicht zum Entsperren" else "Deaktiviert",
+                        title = stringResource(R.string.biometric_lock_title),
+                        subtitle = if (biometricEnabled) stringResource(R.string.biometric_unlock_subtitle) else stringResource(R.string.app_lock_disabled),
                         checked = biometricEnabled,
                         onCheckedChange = onToggleBiometric
                     )
@@ -278,12 +280,12 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
             // --- Info Section ---
-            SectionHeader("Info")
+            SectionHeader(stringResource(R.string.section_info))
 
             SettingsClickItem(
                 icon = Icons.Default.Info,
-                title = "Über ClipVault",
-                subtitle = "Version $versionName",
+                title = stringResource(R.string.about_clipvault),
+                subtitle = stringResource(R.string.version_format, versionName),
                 onClick = onOpenAbout
             )
         }
@@ -387,12 +389,12 @@ fun AppLockSetupDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("App-Sperre aktivieren") },
+        title = { Text(stringResource(R.string.enable_applock_title)) },
         text = {
             Column {
                 if (!showManualFields) {
                     Text(
-                        "Wähle wie die App geschützt werden soll:",
+                        stringResource(R.string.choose_protection),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -407,13 +409,13 @@ fun AppLockSetupDialog(
                     ) {
                         Icon(Icons.Default.Fingerprint, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Mit Fingerprint sichern")
+                        Text(stringResource(R.string.fingerprint_option))
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        "Entsperre nur mit Fingerprint oder Geräte-PIN.",
+                        stringResource(R.string.fingerprint_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -430,11 +432,11 @@ fun AppLockSetupDialog(
                     ) {
                         Icon(Icons.Default.Key, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Eigenes Passwort")
+                        Text(stringResource(R.string.custom_password_option))
                     }
                 } else {
                     Text(
-                        "Lege ein Passwort fest, um die App zu sperren.",
+                        stringResource(R.string.set_password_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -442,7 +444,7 @@ fun AppLockSetupDialog(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; error = null },
-                        label = { Text("Passwort") },
+                        label = { Text(stringResource(R.string.password_label)) },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
@@ -460,7 +462,7 @@ fun AppLockSetupDialog(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it; error = null },
-                        label = { Text("Passwort bestätigen") },
+                        label = { Text(stringResource(R.string.confirm_password_label)) },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -475,14 +477,16 @@ fun AppLockSetupDialog(
         },
         confirmButton = {
             if (showManualFields) {
+                val errorMinLength = stringResource(R.string.error_min_length)
+                val errorMismatch = stringResource(R.string.error_passwords_mismatch)
                 TextButton(onClick = {
                     when {
-                        password.length < 4 -> error = "Mindestens 4 Zeichen"
-                        password != confirmPassword -> error = "Passwörter stimmen nicht überein"
+                        password.length < 4 -> error = errorMinLength
+                        password != confirmPassword -> error = errorMismatch
                         else -> onConfirmManual(password)
                     }
                 }) {
-                    Text("Aktivieren")
+                    Text(stringResource(R.string.activate_button))
                 }
             }
         },
@@ -497,7 +501,7 @@ fun AppLockSetupDialog(
                     onDismiss()
                 }
             }) {
-                Text(if (showManualFields) "Zurück" else "Abbrechen")
+                Text(if (showManualFields) stringResource(R.string.back) else stringResource(R.string.cancel))
             }
         }
     )
@@ -518,13 +522,13 @@ fun ChangePasswordDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Passwort ändern") },
+        title = { Text(stringResource(R.string.change_password_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = oldPassword,
                     onValueChange = { oldPassword = it; error = null },
-                    label = { Text("Aktuelles Passwort") },
+                    label = { Text(stringResource(R.string.current_password_label)) },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -539,7 +543,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it; error = null },
-                    label = { Text("Neues Passwort") },
+                    label = { Text(stringResource(R.string.new_password_label)) },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -549,7 +553,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it; error = null },
-                    label = { Text("Neues Passwort bestätigen") },
+                    label = { Text(stringResource(R.string.confirm_new_password_label)) },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -562,20 +566,23 @@ fun ChangePasswordDialog(
             }
         },
         confirmButton = {
+            val errorEnterCurrent = stringResource(R.string.error_enter_current_password)
+            val errorMinLength = stringResource(R.string.error_min_length)
+            val errorMismatch = stringResource(R.string.error_passwords_mismatch)
             TextButton(onClick = {
                 when {
-                    oldPassword.isBlank() -> error = "Aktuelles Passwort eingeben"
-                    newPassword.length < 4 -> error = "Mindestens 4 Zeichen"
-                    newPassword != confirmPassword -> error = "Passwörter stimmen nicht überein"
+                    oldPassword.isBlank() -> error = errorEnterCurrent
+                    newPassword.length < 4 -> error = errorMinLength
+                    newPassword != confirmPassword -> error = errorMismatch
                     else -> onConfirm(oldPassword, newPassword)
                 }
             }) {
-                Text("Ändern")
+                Text(stringResource(R.string.change_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
