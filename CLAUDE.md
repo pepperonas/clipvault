@@ -4,30 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ClipVault is an Android clipboard history manager (Kotlin, Jetpack Compose, Material 3). It uses an AccessibilityService to capture clipboard changes system-wide and stores them in an always-encrypted Room database (SQLCipher). The UI language is German. Licensed under MIT.
+ClipVault is an Android clipboard history manager (Kotlin, Jetpack Compose, Material 3). It uses an AccessibilityService to capture clipboard changes system-wide and stores them in an always-encrypted Room database (SQLCipher). Bilingual: English (default) + German. Licensed under MIT.
 
-## Build Commands
+## Build & Test Commands
 
 ```bash
-# Debug build
-./gradlew assembleDebug
-
-# Release build (minified + shrunk)
-./gradlew assembleRelease
-
-# Install debug APK on connected device
-./gradlew installDebug
-
-# Run unit tests
-./gradlew test
+./gradlew assembleDebug          # Debug build
+./gradlew assembleRelease        # Release build (minified + shrunk, signed)
+./gradlew installDebug           # Install debug APK on connected device
+./gradlew test                   # Run all unit tests
+./gradlew test --tests "io.celox.clipvault.data.ClipRepositoryTest"                    # Single test class
+./gradlew test --tests "io.celox.clipvault.data.ClipRepositoryTest.insert new content returns new id"  # Single test method
 ```
+
+**Testing stack**: JUnit 4 + Mockito Kotlin + kotlinx-coroutines-test. Tests use `runTest` and backtick-named methods.
 
 ## Versioning
 
-Semantic versioning (SemVer): `MAJOR.MINOR.PATCH` in `app/build.gradle.kts` (`versionName` + `versionCode`).
+SemVer in `app/build.gradle.kts` (`versionName` + `versionCode`). When bumping: update both fields in build.gradle.kts, version badge in both READMEs, and add a changelog row in both READMEs.
 
-- `versionCode` increments with every release (monotonic integer for Play Store)
-- `versionName` follows SemVer: breaking changes = MAJOR, new features = MINOR, fixes = PATCH
+## Signing
+
+Dual-source: environment variables (CI) or `local.properties` (local dev). Env vars: `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`.
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/release.yml`): triggered by `v*` tags. Runs tests, builds signed release + debug APKs, uploads to GitHub Release. Secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
 ## Architecture
 
@@ -43,16 +45,30 @@ Manual dependency wiring — no DI framework. `ClipVaultApp` (Application subcla
 ### Data layer
 
 - **Room database** (`clipvault.db`, version 1, single table `clip_entries`)
-- **Always encrypted** with SQLCipher (AES-256). No plain-text mode exists.
+- **Always encrypted** with SQLCipher (AES-256). `SupportFactory(passphrase, null, false)` — third arg prevents premature passphrase clearing.
 - **ClipEntry**: `id`, `content`, `timestamp`, `pinned`
 - **ClipDao**: queries return `Flow<List<ClipEntry>>`, includes `getCount()`
-- **ClipRepository**: duplicate-check on insert, delete cooldown to prevent re-insertion by polling
+- **ClipRepository**: mutex-serialized insert with duplicate-check, delete cooldown (see below)
 - **DatabaseMigrationHelper**: plain-to-encrypted migration (for upgrades from older versions)
+
+### Delete cooldown mechanism
+
+Critical for preventing re-insertion of deleted content by the clipboard polling:
+
+1. `setDeleteCooldown(content)` — **non-suspend**, sets `@Volatile` fields immediately
+2. `delete(entry)` — **suspend**, only does the DB deletion
+3. The ViewModel calls `setDeleteCooldown()` *before* launching the delete coroutine, closing the race window where polling could re-insert
+4. Cooldown window: 10 seconds (`DELETE_COOLDOWN_MS`)
+5. `reInsert()` clears the cooldown (for undo)
+
+### DB recovery on reinstall
+
+`ClipVaultApp.openDatabase()` forces a test query after opening. If the passphrase is wrong (e.g. after reinstall where KeyStore was cleared but DB file persists), it deletes the old DB and creates a fresh one.
 
 ### Security layer
 
-- **KeyStoreManager**: Central security manager handling two separate concerns:
-  1. **DB passphrase**: Auto-generated 64-char passphrase, encrypted with AES-256-GCM via Android KeyStore (StrongBox preferred on API 28+). User never sees this.
+- **KeyStoreManager**: Two separate concerns:
+  1. **DB passphrase**: Auto-generated 64-char, encrypted with AES-256-GCM via Android KeyStore (StrongBox preferred on API 28+). User never sees this.
   2. **App lock**: Optional UI lock with password (user-set or auto-generated) + biometric support. Stored separately from DB passphrase.
 - **v3 migration**: On first launch after upgrade, legacy user password is adopted as DB passphrase (no re-encryption needed), and app lock settings are preserved.
 - Passphrase byte arrays are zeroed after use (`Arrays.fill(bytes, 0)`)
@@ -61,11 +77,22 @@ Manual dependency wiring — no DI framework. `ClipVaultApp` (Application subcla
 
 Multi-activity app with Jetpack Compose screens:
 
-- **HistoryActivity** — main clipboard history (search, pin, copy, delete, lock/unlock)
-- **SettingsActivity** — app lock toggle, biometric toggle, password change, DB encryption info (always-on), about link
+- **HistoryActivity** — main clipboard history (search, pin, copy, delete, lock/unlock, swipe-to-delete with undo)
+- **SettingsActivity** — app lock toggle, biometric toggle, password change, DB encryption info
 - **AboutActivity** — app icon, version, author, copyright
 
 `HistoryViewModel` uses `flatMapLatest` to switch between all-entries and search-filtered flows.
+
+### Foreground service notification
+
+`ClipVaultService`: channel importance `IMPORTANCE_DEFAULT` with `setSilent(true)`, `setSound(null, null)`, `enableVibration(false)`. Combined with `setOngoing(true)` + `FLAG_ONGOING_EVENT | FLAG_NO_CLEAR` to make the notification non-dismissible but silent.
+
+### Localization
+
+- `values/strings.xml` — English (default)
+- `values-de/strings.xml` — German
+- All user-facing strings use `R.string.*` resources. Content type labels use `labelRes: Int` in enum. Timestamps use `Context.getString()` with format args. Android selects locale automatically.
+- READMEs: `README.md` (English), `README.de.md` (German) with language switcher badges.
 
 ### Key technical details
 
@@ -75,5 +102,5 @@ Multi-activity app with Jetpack Compose screens:
 - AppCompat DayNight theme for proper status bar icon adaptation
 - Dynamic color (Material You) on Android 12+, custom dark/light fallback schemes
 - Foreground service type: `specialUse` (clipboard_manager)
-- ProGuard enabled for release builds (keeps SQLCipher)
+- ProGuard enabled for release builds (keeps Room + SQLCipher classes)
 - INTERNET permission explicitly removed via manifest merger
