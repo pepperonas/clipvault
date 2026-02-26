@@ -32,7 +32,7 @@ abstract class ClipDatabase : RoomDatabase() {
         }
 
         private fun buildEncryptedDatabase(context: Context, passphrase: ByteArray): ClipDatabase {
-            val factory: SupportSQLiteOpenHelper.Factory = SupportFactory(passphrase)
+            val factory: SupportSQLiteOpenHelper.Factory = SupportFactory(passphrase, null, false)
             return Room.databaseBuilder(
                 context.applicationContext,
                 ClipDatabase::class.java,

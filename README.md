@@ -1,4 +1,7 @@
-🌐 [English](README.md) | [Deutsch](README.de.md)
+<p align="right">
+  <a href="README.md"><img src="https://img.shields.io/badge/EN-English-blue?style=flat-square" alt="English"></a>
+  <a href="README.de.md"><img src="https://img.shields.io/badge/DE-Deutsch-grey?style=flat-square" alt="Deutsch"></a>
+</p>
 
 # ClipVault
 

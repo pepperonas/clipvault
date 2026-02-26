@@ -86,6 +86,8 @@ class ClipVaultApp : Application() {
 
     /**
      * Opens the always-encrypted database with the auto-generated passphrase.
+     * If the DB file exists but can't be decrypted (e.g. after reinstall where
+     * the KeyStore was cleared), deletes the old DB and creates a fresh one.
      */
     fun openDatabase() {
         if (database != null) return
@@ -95,11 +97,27 @@ class ClipVaultApp : Application() {
 
         try {
             val db = ClipDatabase.getInstance(this, passphraseBytes)
+            // Force a query to verify the passphrase works
+            db.openHelper.writableDatabase
             database = db
             repository = ClipRepository(db.clipDao())
             Log.i(TAG, "Database opened successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to open database", e)
+            Log.e(TAG, "Failed to open database, resetting", e)
+            ClipDatabase.closeAndReset()
+            deleteDatabase(ClipDatabase.DB_NAME)
+            // Retry with a fresh DB
+            try {
+                val freshPassphrase = keyStoreManager.getOrCreateDbPassphrase()
+                val freshBytes = freshPassphrase.toByteArray(Charsets.UTF_8)
+                val db = ClipDatabase.getInstance(this, freshBytes)
+                database = db
+                repository = ClipRepository(db.clipDao())
+                Arrays.fill(freshBytes, 0.toByte())
+                Log.i(TAG, "Fresh database created after reset")
+            } catch (e2: Exception) {
+                Log.e(TAG, "Failed to create fresh database", e2)
+            }
         } finally {
             Arrays.fill(passphraseBytes, 0.toByte())
         }
