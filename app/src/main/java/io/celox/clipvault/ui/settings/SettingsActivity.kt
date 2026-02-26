@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -64,7 +63,6 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import io.celox.clipvault.ClipVaultApp
 import io.celox.clipvault.ui.about.AboutActivity
-import io.celox.clipvault.ui.license.LicenseActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
 import java.security.SecureRandom
 
@@ -93,8 +91,6 @@ class SettingsActivity : FragmentActivity() {
                     appLockEnabled = appLockEnabled,
                     biometricEnabled = biometricEnabled,
                     passwordGenerated = passwordGenerated,
-                    isLicenseActivated = app.licenseManager.isActivated(),
-                    licenseEmail = app.licenseManager.getActivatedEmail(),
                     versionName = versionName,
                     onBack = { finish() },
                     onToggleAppLock = { enabled ->
@@ -108,9 +104,6 @@ class SettingsActivity : FragmentActivity() {
                     onToggleBiometric = { enabled ->
                         ksm.setAppLockBiometricEnabled(enabled)
                         biometricEnabled = enabled
-                    },
-                    onOpenLicense = {
-                        startActivity(Intent(this, LicenseActivity::class.java))
                     },
                     onOpenAbout = {
                         startActivity(Intent(this, AboutActivity::class.java))
@@ -201,14 +194,11 @@ fun SettingsScreen(
     appLockEnabled: Boolean,
     biometricEnabled: Boolean,
     passwordGenerated: Boolean,
-    isLicenseActivated: Boolean,
-    licenseEmail: String?,
     versionName: String,
     onBack: () -> Unit,
     onToggleAppLock: (Boolean) -> Unit,
     onChangePassword: () -> Unit,
     onToggleBiometric: (Boolean) -> Unit,
-    onOpenLicense: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
     Scaffold(
@@ -284,18 +274,6 @@ fun SettingsScreen(
                     )
                 }
             }
-
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-
-            // --- License Section ---
-            SectionHeader("Lizenz")
-
-            SettingsClickItem(
-                icon = Icons.Default.Shield,
-                title = if (isLicenseActivated) "Lizenz aktiv" else "Lizenz aktivieren",
-                subtitle = if (isLicenseActivated) licenseEmail ?: "" else "Kostenlose Version (max. 10 Clips)",
-                onClick = onOpenLicense
-            )
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 

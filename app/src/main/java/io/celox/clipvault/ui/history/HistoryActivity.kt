@@ -114,8 +114,9 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import io.celox.clipvault.ClipVaultApp
 import io.celox.clipvault.data.ClipEntry
-import io.celox.clipvault.licensing.LicenseManager
 import io.celox.clipvault.service.ClipAccessibilityService
+import io.celox.clipvault.util.ContentTypeLabel
+import io.celox.clipvault.util.detectContentTypeLabel
 import io.celox.clipvault.ui.settings.SettingsActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
 import kotlinx.coroutines.launch
@@ -155,14 +156,11 @@ class HistoryActivity : FragmentActivity() {
             ClipVaultTheme {
                 val isUnlocked = viewModel?.isUnlocked?.collectAsState()?.value ?: !app.isAppLockEnabled
                 val appLockEnabled = app.isAppLockEnabled
-                val isLicensed = app.licenseManager.isActivated()
-
                 HistoryScreen(
                     viewModel = viewModel,
                     isUnlocked = isUnlocked,
                     appLockEnabled = appLockEnabled,
                     accessibilityEnabled = accessibilityEnabled.value,
-                    isLicensed = isLicensed,
                     onOpenAccessibilitySettings = { openAccessibilitySettings() },
                     onCopyToClipboard = { text -> copyToClipboard(text) },
                     onLock = { viewModel?.lock() },
@@ -346,7 +344,6 @@ fun HistoryScreen(
     isUnlocked: Boolean,
     appLockEnabled: Boolean,
     accessibilityEnabled: Boolean,
-    isLicensed: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onCopyToClipboard: (String) -> Unit,
     onLock: () -> Unit,
@@ -428,11 +425,6 @@ fun HistoryScreen(
             // Setup banner if accessibility not enabled (only show when unlocked)
             if (isUnlocked && !accessibilityEnabled) {
                 SetupBanner(onOpenSettings = onOpenAccessibilitySettings)
-            }
-
-            // License banner when not licensed and at clip limit
-            if (isUnlocked && !isLicensed && entries.size >= LicenseManager.getMaxFreeClips()) {
-                LicenseBanner()
             }
 
             // Search bar (only when unlocked)
@@ -703,12 +695,6 @@ fun GuideDialog(onDismiss: () -> Unit) {
                             "Wähle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. " +
                             "Die Sperre schützt die Anzeige — die Datenbank bleibt immer verschlüsselt."
                 )
-                GuideSection(
-                    title = "7. Lizenz",
-                    text = "Die kostenlose Version speichert bis zu ${LicenseManager.getMaxFreeClips()} Clips. " +
-                            "Mit einer Lizenz kannst du unbegrenzt Clips speichern. " +
-                            "Die Aktivierung erfolgt in den Einstellungen."
-                )
             }
         },
         confirmButton = {
@@ -734,40 +720,6 @@ private fun GuideSection(title: String, text: String) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-// --- License Banner ---
-
-@Composable
-fun LicenseBanner() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "Clip-Limit erreicht",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onTertiaryContainer
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Maximal ${LicenseManager.getMaxFreeClips()} Clips in der kostenlosen Version. Aktiviere eine Lizenz in den Einstellungen für unbegrenzte Clips.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
-            )
-        }
     }
 }
 
@@ -950,19 +902,18 @@ private enum class ContentType(val icon: ImageVector, val color: Color, val labe
 }
 
 private fun detectContentType(content: String): ContentType {
-    val trimmed = content.trim().lowercase()
-    return when {
-        trimmed.contains("instagram.com") || trimmed.contains("instagr.am") -> ContentType.INSTAGRAM
-        trimmed.contains("facebook.com") || trimmed.contains("fb.com") || trimmed.contains("fb.me") -> ContentType.FACEBOOK
-        trimmed.contains("youtube.com") || trimmed.contains("youtu.be") -> ContentType.YOUTUBE
-        trimmed.contains("twitter.com") || trimmed.contains("x.com") || trimmed.contains("t.co/") -> ContentType.TWITTER
-        trimmed.contains("tiktok.com") || trimmed.contains("vm.tiktok.com") -> ContentType.TIKTOK
-        trimmed.contains("linkedin.com") || trimmed.contains("lnkd.in") -> ContentType.LINKEDIN
-        trimmed.contains("github.com") || trimmed.contains("gitlab.com") -> ContentType.GITHUB
-        trimmed.matches(Regex(".*https?://.*")) || trimmed.matches(Regex(".*www\\..*")) -> ContentType.URL
-        trimmed.matches(Regex(".*[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}.*")) -> ContentType.EMAIL
-        trimmed.matches(Regex(".*[+]?[0-9\\s\\-()]{7,}.*")) -> ContentType.PHONE
-        else -> ContentType.TEXT
+    return when (detectContentTypeLabel(content)) {
+        ContentTypeLabel.INSTAGRAM -> ContentType.INSTAGRAM
+        ContentTypeLabel.FACEBOOK -> ContentType.FACEBOOK
+        ContentTypeLabel.YOUTUBE -> ContentType.YOUTUBE
+        ContentTypeLabel.TWITTER -> ContentType.TWITTER
+        ContentTypeLabel.TIKTOK -> ContentType.TIKTOK
+        ContentTypeLabel.LINKEDIN -> ContentType.LINKEDIN
+        ContentTypeLabel.GITHUB -> ContentType.GITHUB
+        ContentTypeLabel.URL -> ContentType.URL
+        ContentTypeLabel.EMAIL -> ContentType.EMAIL
+        ContentTypeLabel.PHONE -> ContentType.PHONE
+        ContentTypeLabel.TEXT -> ContentType.TEXT
     }
 }
 

@@ -1,13 +1,11 @@
 package io.celox.clipvault.data
 
-import io.celox.clipvault.licensing.LicenseManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class ClipRepository(
-    private val dao: ClipDao,
-    private val licenseManager: LicenseManager? = null
+    private val dao: ClipDao
 ) {
 
     // Serialize insert operations to prevent TOCTOU race conditions
@@ -22,8 +20,7 @@ class ClipRepository(
 
     companion object {
         const val DELETE_COOLDOWN_MS = 10_000L // 10 seconds
-        const val SKIPPED_COOLDOWN = -2L // distinct from LIMIT_REACHED (-1)
-        const val LIMIT_REACHED = -1L
+        const val SKIPPED_COOLDOWN = -2L
     }
 
     val allEntries: Flow<List<ClipEntry>> = dao.getAllEntries()
@@ -39,12 +36,6 @@ class ClipRepository(
         val deleted = recentlyDeletedContent
         if (deleted == content && System.currentTimeMillis() - recentlyDeletedTimestamp < DELETE_COOLDOWN_MS) {
             return@withLock SKIPPED_COOLDOWN
-        }
-
-        // Check clip limit for unlicensed users
-        if (licenseManager != null && !licenseManager.isActivated()) {
-            val count = dao.getCount()
-            if (count >= LicenseManager.getMaxFreeClips()) return@withLock LIMIT_REACHED
         }
 
         // Avoid duplicates: don't insert if last entry has same content

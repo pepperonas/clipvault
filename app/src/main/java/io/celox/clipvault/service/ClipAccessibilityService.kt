@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
-import android.widget.Toast
 import io.celox.clipvault.ClipVaultApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
+
 
 /**
  * Accessibility Service that captures clipboard changes.
@@ -157,15 +156,6 @@ class ClipAccessibilityService : AccessibilityService() {
         try {
             val id = repo.insert(text)
             Log.d(TAG, "Saved clip id=$id len=${text.length}")
-            if (id == io.celox.clipvault.data.ClipRepository.LIMIT_REACHED) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ClipAccessibilityService,
-                        "Clip-Limit erreicht",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save clip: ${e.message}", e)
         }

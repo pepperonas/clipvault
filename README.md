@@ -6,10 +6,14 @@
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2024.12.01-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
-[![License](https://img.shields.io/badge/License-Proprietary-red)](https://celox.io)
-[![Version](https://img.shields.io/badge/Version-3.4.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-3.5.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler App-Sperre.
+
+## Keine INTERNET-Permission
+
+ClipVault funktioniert **vollständig offline**. Die App hat die INTERNET-Permission explizit entfernt (`tools:node="remove"` im Manifest). Es werden keine Daten gesendet, keine Telemetrie erfasst, keine Server kontaktiert. Deine Clipboard-Daten verlassen niemals dein Gerät.
 
 ## Features
 
@@ -23,8 +27,8 @@ Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler 
 - **Integrierte Anleitung** — Hilfe-Dialog direkt in der App
 - **Suche** und Clip-Verwaltung
 - **Material You** (dynamische Farben ab Android 12) mit Dark/Light-Support
-- **Offline-Lizenzierung** (HMAC-SHA256, kein Internet erforderlich)
 - **Foreground Service** mit persistenter Benachrichtigung
+- **Keine Clip-Limits** — unbegrenzte Clips speichern
 
 ## Voraussetzungen
 
@@ -43,6 +47,9 @@ Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler 
 
 # Auf Gerät installieren
 ./gradlew installDebug
+
+# Tests ausführen
+./gradlew test
 ```
 
 ## Architektur
@@ -54,12 +61,10 @@ io.celox.clipvault/
 │   ├── ClipEntry.kt                 # Room Entity
 │   ├── ClipDao.kt                   # Room DAO
 │   ├── ClipDatabase.kt              # Room DB (immer SQLCipher-verschlüsselt)
-│   ├── ClipRepository.kt            # Repository + Clip-Limit
+│   ├── ClipRepository.kt            # Repository (Dedup, Cooldown, Mutex)
 │   └── DatabaseMigrationHelper.kt   # Plain -> Encrypted Migration
 ├── security/
 │   └── KeyStoreManager.kt           # Android KeyStore (StrongBox) + Auto-Passphrase + App-Lock
-├── licensing/
-│   └── LicenseManager.kt            # Offline HMAC-SHA256 Validierung
 ├── service/
 │   ├── ClipAccessibilityService.kt  # Clipboard-Capture (3 Strategien)
 │   └── ClipVaultService.kt          # Foreground Service
@@ -68,8 +73,7 @@ io.celox.clipvault/
     ├── history/
     │   ├── HistoryActivity.kt       # Hauptscreen
     │   └── HistoryViewModel.kt      # ViewModel
-    ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Lizenz, Info)
-    ├── license/LicenseActivity.kt   # Lizenzaktivierung
+    ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Info)
     └── about/AboutActivity.kt       # Über die App
 ```
 
@@ -89,7 +93,6 @@ Die Datenbank ist **immer verschlüsselt** — es gibt keinen unverschlüsselten
 1. **Clipboard-Erfassung**: AccessibilityService (3 Strategien, Mutex-Debouncing) -> ClipRepository.insert() (Mutex-serialisiert) -> verschlüsselte Room DB
 2. **UI**: HistoryViewModel <- Flow<List<ClipEntry>> <- ClipDao
 3. **App-Sperre**: HistoryActivity prüft `isAppLockEnabled` -> BiometricPrompt oder Passwort-Dialog
-4. **Lizenz**: LicenseManager.validateAndActivate() -> KeyStoreManager.storeLicenseData()
 
 ### Migration von v1/v2
 
@@ -98,15 +101,6 @@ Beim ersten Start nach dem Update auf v3 wird automatisch migriert:
 - **v1/v2 (verschlüsselt mit User-Passwort)**: Legacy-Passwort wird als DB-Passphrase übernommen, App-Sperre wird aktiviert
 - **v2 (unverschlüsselt)**: Datenbank wird mit auto-generierter Passphrase verschlüsselt
 - **Frische Installation**: Datenbank wird direkt verschlüsselt erstellt
-
-## Lizenzierung
-
-Kostenlose Version: max. 10 Clips. Lizenzschlüssel schaltet unbegrenzte Clips frei.
-
-- **Algorithmus**: `HMAC-SHA256(email.lowercase().trim(), secret)`
-- **Format**: `XXXX-XXXX-XXXX-XXXX` (erste 8 Bytes als Hex)
-- **Validierung**: komplett offline, kein INTERNET-Permission
-- **Key-Generierung**: `tools/generate-license-key.sh <email>`
 
 ## Versionierung
 
@@ -118,6 +112,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Änderung |
 |---|---|
+| 3.5.0 | Open Source (MIT-Lizenz), In-App-Lizenzierung entfernt (keine Clip-Limits mehr), Unit-Tests hinzugefügt |
 | 3.4.0 | Delete-Cooldown verhindert Re-Insert durch Polling, Toast-Spam entfernt, Umlaute korrigiert, README-Badges |
 | 3.3.1 | Fix: oberster Eintrag löschbar (Swipe-Deletion nach Animation), kürzere Toasts, About-Seite mit Entwickler-Info und Website-Link |
 | 3.3.0 | Content-Type-Icons (Social Media, URL, E-Mail, Telefon), Swipe-Schwelle 40% gegen versehentliches Löschen, Fix: letzter Eintrag löschbar |
@@ -148,4 +143,4 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 ## Lizenz
 
-(c) 2026 Martin Pfeffer. Alle Rechte vorbehalten.
+MIT License — siehe [LICENSE](LICENSE).

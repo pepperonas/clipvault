@@ -38,11 +38,6 @@ class KeyStoreManager(context: Context) {
         private const val KEY_LEGACY_BIOMETRIC = "biometric_enabled"
         private const val KEY_LEGACY_PW_GENERATED = "password_generated"
 
-        // License
-        private const val KEY_LICENSE_EMAIL = "license_email"
-        private const val KEY_LICENSE_KEY = "license_key"
-        private const val KEY_LICENSE_ACTIVATED = "license_activated"
-
         // Migration flag
         private const val KEY_V3_MIGRATED = "v3_migrated"
 
@@ -129,20 +124,6 @@ class KeyStoreManager(context: Context) {
             .remove(KEY_LEGACY_PW_GENERATED)
             .apply()
     }
-
-    // --- License storage ---
-
-    fun storeLicenseData(email: String, key: String, activated: Boolean) {
-        prefs.edit()
-            .putString(KEY_LICENSE_EMAIL, email)
-            .putString(KEY_LICENSE_KEY, key)
-            .putBoolean(KEY_LICENSE_ACTIVATED, activated)
-            .apply()
-    }
-
-    fun isLicenseActivated(): Boolean = prefs.getBoolean(KEY_LICENSE_ACTIVATED, false)
-
-    fun getLicenseEmail(): String? = prefs.getString(KEY_LICENSE_EMAIL, null)
 
     // --- Internal encryption helpers ---
 

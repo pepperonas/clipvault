@@ -41,12 +41,6 @@
             android:exported="false"
             android:theme="@style/Theme.ClipVault" />
 
-        <!-- License -->
-        <activity
-            android:name=".ui.license.LicenseActivity"
-            android:exported="false"
-            android:theme="@style/Theme.ClipVault" />
-
         <!-- Foreground Service for persistent notification -->
         <service
             android:name=".service.ClipVaultService"

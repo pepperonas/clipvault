@@ -5,7 +5,6 @@ import android.util.Log
 import io.celox.clipvault.data.ClipDatabase
 import io.celox.clipvault.data.ClipRepository
 import io.celox.clipvault.data.DatabaseMigrationHelper
-import io.celox.clipvault.licensing.LicenseManager
 import io.celox.clipvault.security.KeyStoreManager
 import net.sqlcipher.database.SQLiteDatabase
 import java.util.Arrays
@@ -17,8 +16,6 @@ class ClipVaultApp : Application() {
     }
 
     lateinit var keyStoreManager: KeyStoreManager
-        private set
-    lateinit var licenseManager: LicenseManager
         private set
 
     var database: ClipDatabase? = null
@@ -33,7 +30,6 @@ class ClipVaultApp : Application() {
         super.onCreate()
         SQLiteDatabase.loadLibs(this)
         keyStoreManager = KeyStoreManager(this)
-        licenseManager = LicenseManager(keyStoreManager)
 
         if (!keyStoreManager.isV3Migrated()) {
             migrateToV3()
@@ -100,7 +96,7 @@ class ClipVaultApp : Application() {
         try {
             val db = ClipDatabase.getInstance(this, passphraseBytes)
             database = db
-            repository = ClipRepository(db.clipDao(), licenseManager)
+            repository = ClipRepository(db.clipDao())
             Log.i(TAG, "Database opened successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open database", e)
