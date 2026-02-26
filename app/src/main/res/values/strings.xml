@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ClipVault</string>
+    <string name="notification_channel_name">ClipVault Service</string>
+    <string name="notification_channel_desc">Persistente Benachrichtigung für den Clipboard Manager</string>
+    <string name="accessibility_service_desc">ClipVault überwacht die Zwischenablage und speichert kopierte Inhalte automatisch in der Clip-Historie. Dieser Service benötigt Accessibility-Zugriff, um Clipboard-Änderungen im Hintergrund erkennen zu können.</string>
+</resources>
