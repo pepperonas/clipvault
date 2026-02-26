@@ -86,6 +86,7 @@ class ClipVaultService : Service() {
             .setContentText("Clips werden automatisch gespeichert · Tippen für Historie")
             .setSmallIcon(R.drawable.ic_clipboard)
             .setOngoing(true)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(historyPending)
             .addAction(0, "⏹ Stoppen", stopPending)
             .setPriority(NotificationCompat.PRIORITY_LOW)

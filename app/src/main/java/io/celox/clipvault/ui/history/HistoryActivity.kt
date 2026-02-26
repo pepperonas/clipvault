@@ -17,7 +17,9 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,12 +44,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,10 +63,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,6 +78,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -447,20 +454,93 @@ fun HistoryScreen(
                     }
                 }
             } else {
+                val favorites = entries.filter { it.pinned }
+                val nonFavorites = entries.filter { !it.pinned }
+                var favoritesExpanded by remember { mutableStateOf(true) }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(items = entries, key = { it.id }) { entry ->
-                        ClipEntryCard(
-                            entry = entry,
-                            onCopy = { onCopyToClipboard(entry.content) },
-                            onPin = { viewModel?.togglePin(entry) },
-                            onDelete = { viewModel?.delete(entry) }
-                        )
+                    // Favorites Accordion
+                    if (favorites.isNotEmpty()) {
+                        item(key = "favorites_header") {
+                            val chevronRotation by animateFloatAsState(
+                                targetValue = if (favoritesExpanded) 0f else -90f,
+                                label = "chevron"
+                            )
+                            Card(
+                                onClick = { favoritesExpanded = !favoritesExpanded },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Star,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Favoriten (${favorites.size})",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Icon(
+                                        Icons.Default.KeyboardArrowDown,
+                                        contentDescription = if (favoritesExpanded) "Zuklappen" else "Aufklappen",
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .rotate(chevronRotation),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+
+                        if (favoritesExpanded) {
+                            items(items = favorites, key = { it.id }) { entry ->
+                                SwipeToDeleteContainer(
+                                    onDelete = { viewModel?.delete(entry) }
+                                ) {
+                                    ClipEntryCard(
+                                        entry = entry,
+                                        onCopy = { onCopyToClipboard(entry.content) },
+                                        onToggleFavorite = { viewModel?.togglePin(entry) }
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    item {
+                    // Regular entries
+                    items(items = nonFavorites, key = { it.id }) { entry ->
+                        SwipeToDeleteContainer(
+                            onDelete = { viewModel?.delete(entry) }
+                        ) {
+                            ClipEntryCard(
+                                entry = entry,
+                                onCopy = { onCopyToClipboard(entry.content) },
+                                onToggleFavorite = { viewModel?.togglePin(entry) }
+                            )
+                        }
+                    }
+
+                    item(key = "footer") {
                         Text(
                             "(c) 2026 Martin Pfeffer | celox.io",
                             modifier = Modifier
@@ -480,7 +560,7 @@ fun HistoryScreen(
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
             title = { Text("Alle loeschen?") },
-            text = { Text("Alle nicht-angepinnten Clips werden geloescht. Das kann nicht rueckgaengig gemacht werden.") },
+            text = { Text("Alle nicht-favorisierten Clips werden geloescht. Das kann nicht rueckgaengig gemacht werden.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel?.deleteAllUnpinned()
@@ -708,8 +788,7 @@ fun SetupBanner(onOpenSettings: () -> Unit) {
 fun ClipEntryCard(
     entry: ClipEntry,
     onCopy: () -> Unit,
-    onPin: () -> Unit,
-    onDelete: () -> Unit
+    onToggleFavorite: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -748,7 +827,7 @@ fun ClipEntryCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            AnimatedVisibility(visible = expanded || entry.pinned) {
+            AnimatedVisibility(visible = expanded) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -764,10 +843,10 @@ fun ClipEntryCard(
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(onClick = onPin, modifier = Modifier.size(36.dp)) {
+                    IconButton(onClick = onToggleFavorite, modifier = Modifier.size(36.dp)) {
                         Icon(
-                            if (entry.pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                            contentDescription = "Anpinnen",
+                            if (entry.pinned) Icons.Filled.Star else Icons.Outlined.Star,
+                            contentDescription = "Favorit",
                             modifier = Modifier.size(18.dp),
                             tint = if (entry.pinned)
                                 MaterialTheme.colorScheme.primary
@@ -775,18 +854,53 @@ fun ClipEntryCard(
                                 MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Loeschen",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
                 }
             }
         }
+    }
+}
+
+// --- Swipe to Delete Container ---
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeToDeleteContainer(
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else false
+        }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 2.dp)
+                    .background(
+                        MaterialTheme.colorScheme.error,
+                        RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Loeschen",
+                    tint = MaterialTheme.colorScheme.onError
+                )
+            }
+        }
+    ) {
+        content()
     }
 }
 
