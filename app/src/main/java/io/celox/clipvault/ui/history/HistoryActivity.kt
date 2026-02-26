@@ -1047,6 +1047,7 @@ fun SwipeToDeleteContainer(
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    var isDeleted by remember { mutableStateOf(false) }
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
@@ -1060,44 +1061,48 @@ fun SwipeToDeleteContainer(
 
     // Delete AFTER swipe animation completes, not during gesture handling
     LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart && !isDeleted) {
+            isDeleted = true
             onDelete()
         }
     }
 
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
-            val bgAlpha by animateFloatAsState(
-                targetValue = if (isSwiping) 1f else 0f,
-                animationSpec = tween(if (isSwiping) 100 else 300),
-                label = "swipe_bg"
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 2.dp)
-                    .background(
-                        MaterialTheme.colorScheme.error.copy(alpha = bgAlpha),
-                        RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Löschen",
-                    modifier = Modifier.graphicsLayer { alpha = bgAlpha },
-                    tint = MaterialTheme.colorScheme.onError
+    // Once deleted, hide immediately to prevent brief reappearance on recomposition
+    if (!isDeleted) {
+        SwipeToDismissBox(
+            state = dismissState,
+            enableDismissFromStartToEnd = false,
+            enableDismissFromEndToStart = true,
+            backgroundContent = {
+                val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+                val bgAlpha by animateFloatAsState(
+                    targetValue = if (isSwiping) 1f else 0f,
+                    animationSpec = tween(if (isSwiping) 100 else 300),
+                    label = "swipe_bg"
                 )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp, vertical = 2.dp)
+                        .background(
+                            MaterialTheme.colorScheme.error.copy(alpha = bgAlpha),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Löschen",
+                        modifier = Modifier.graphicsLayer { alpha = bgAlpha },
+                        tint = MaterialTheme.colorScheme.onError
+                    )
+                }
             }
+        ) {
+            content()
         }
-    ) {
-        content()
     }
 }
 
