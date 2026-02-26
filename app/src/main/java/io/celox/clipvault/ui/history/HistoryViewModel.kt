@@ -49,6 +49,10 @@ class HistoryViewModel(private val repository: ClipRepository) : ViewModel() {
         viewModelScope.launch { repository.delete(entry) }
     }
 
+    fun reInsert(entry: ClipEntry) {
+        viewModelScope.launch { repository.reInsert(entry) }
+    }
+
     fun deleteAllUnpinned() {
         viewModelScope.launch { repository.deleteAllUnpinned() }
     }

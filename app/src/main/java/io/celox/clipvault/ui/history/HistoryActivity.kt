@@ -40,11 +40,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -66,6 +69,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -79,6 +86,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,6 +111,7 @@ import io.celox.clipvault.service.ClipAccessibilityService
 import io.celox.clipvault.ui.settings.SettingsActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -305,9 +314,13 @@ class HistoryActivity : FragmentActivity() {
     }
 
     private fun copyToClipboard(text: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("ClipVault", text))
-        Toast.makeText(this, "Kopiert!", Toast.LENGTH_SHORT).show()
+        try {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("ClipVault", text))
+            Toast.makeText(this, "Kopiert!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Kopieren fehlgeschlagen", Toast.LENGTH_SHORT).show()
+        }
     }
 }
 
@@ -336,9 +349,13 @@ fun HistoryScreen(
         ?: remember { mutableStateOf("") })
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
+    var showGuide by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -376,6 +393,9 @@ fun HistoryScreen(
                         IconButton(onClick = onRequestUnlock) {
                             Icon(Icons.Default.LockOpen, contentDescription = "Entsperren")
                         }
+                    }
+                    IconButton(onClick = { showGuide = true }) {
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Anleitung")
                     }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Einstellungen")
@@ -523,7 +543,19 @@ fun HistoryScreen(
                         if (favoritesExpanded) {
                             items(items = favorites, key = { it.id }) { entry ->
                                 SwipeToDeleteContainer(
-                                    onDelete = { viewModel?.delete(entry) }
+                                    onDelete = {
+                                        viewModel?.delete(entry)
+                                        scope.launch {
+                                            val result = snackbarHostState.showSnackbar(
+                                                message = "Eintrag geloescht",
+                                                actionLabel = "Rueckgaengig",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                            if (result == SnackbarResult.ActionPerformed) {
+                                                viewModel?.reInsert(entry)
+                                            }
+                                        }
+                                    }
                                 ) {
                                     ClipEntryCard(
                                         entry = entry,
@@ -589,6 +621,93 @@ fun HistoryScreen(
         PasswordFallbackDialog(
             onDismiss = onPasswordFallbackDismiss,
             onSubmit = onPasswordFallbackSubmit
+        )
+    }
+
+    if (showGuide) {
+        GuideDialog(onDismiss = { showGuide = false })
+    }
+}
+
+// --- Guide Dialog ---
+
+@Composable
+fun GuideDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Anleitung", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                GuideSection(
+                    title = "1. Einrichtung",
+                    text = "Aktiviere den Accessibility Service in den Android-Einstellungen " +
+                            "(Bedienungshilfen > ClipVault). Erst dann kann ClipVault " +
+                            "Kopier-Aktionen automatisch erkennen und speichern."
+                )
+                GuideSection(
+                    title = "2. Clips kopieren",
+                    text = "Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. " +
+                            "Langer Druck zeigt den vollstaendigen Text an."
+                )
+                GuideSection(
+                    title = "3. Favoriten",
+                    text = "Tippe auf das Stern-Symbol, um einen Clip als Favorit zu markieren. " +
+                            "Favoriten erscheinen in einer eigenen aufklappbaren Sektion " +
+                            "am Anfang der Liste und werden beim Loeschen aller Clips beibehalten."
+                )
+                GuideSection(
+                    title = "4. Loeschen",
+                    text = "Wische einen Eintrag nach links, um ihn zu loeschen. " +
+                            "Nach dem Loeschen erscheint kurz eine \"Rueckgaengig\"-Option. " +
+                            "Ueber das Papierkorb-Symbol oben kannst du alle " +
+                            "nicht-favorisierten Clips auf einmal loeschen."
+                )
+                GuideSection(
+                    title = "5. Suche",
+                    text = "Tippe auf die Lupe in der oberen Leiste, um nach Clips zu suchen. " +
+                            "Die Suche filtert in Echtzeit nach dem eingegebenen Text."
+                )
+                GuideSection(
+                    title = "6. App-Sperre",
+                    text = "In den Einstellungen kannst du eine App-Sperre aktivieren. " +
+                            "Waehle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. " +
+                            "Die Sperre schuetzt die Anzeige — die Datenbank bleibt immer verschluesselt."
+                )
+                GuideSection(
+                    title = "7. Lizenz",
+                    text = "Die kostenlose Version speichert bis zu ${LicenseManager.getMaxFreeClips()} Clips. " +
+                            "Mit einer Lizenz kannst du unbegrenzt Clips speichern. " +
+                            "Die Aktivierung erfolgt in den Einstellungen."
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Verstanden")
+            }
+        }
+    )
+}
+
+@Composable
+private fun GuideSection(title: String, text: String) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

@@ -44,5 +44,7 @@ class ClipRepository(
 
     suspend fun delete(entry: ClipEntry) = dao.delete(entry)
 
+    suspend fun reInsert(entry: ClipEntry) = dao.insert(entry)
+
     suspend fun deleteAllUnpinned() = dao.deleteAllUnpinned()
 }
