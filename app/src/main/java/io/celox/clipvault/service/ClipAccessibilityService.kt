@@ -14,13 +14,16 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Accessibility Service that captures clipboard changes.
  *
  * Three strategies for maximum compatibility:
- * 1. ClipboardManager.OnPrimaryClipChangedListener
- * 2. Accessibility event-triggered clipboard polling
+ * 1. ClipboardManager.OnPrimaryClipChangedListener (primary)
+ * 2. Accessibility event-triggered clipboard read (fallback)
  * 3. Periodic polling every 2 seconds as final fallback (Android 16+)
  */
 class ClipAccessibilityService : AccessibilityService() {
@@ -28,20 +31,22 @@ class ClipAccessibilityService : AccessibilityService() {
     companion object {
         private const val TAG = "ClipAccessibility"
         private const val POLL_INTERVAL_MS = 2000L
+        private const val DEBOUNCE_MS = 500L
         var isRunning = false
             private set
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var clipboardManager: ClipboardManager
-    private var lastClipText: String? = null
-    private var lastClipTime: Long = 0
-    private var listenerFired = false
+
+    // Thread-safe clipboard state via Mutex
+    private val clipMutex = Mutex()
+    @Volatile private var lastClipText: String? = null
+    @Volatile private var lastClipTime: Long = 0
 
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
-        listenerFired = true
         Log.d(TAG, "Listener fired")
-        handleClipboardChange("listener")
+        processClipboard("listener")
     }
 
     override fun onServiceConnected() {
@@ -52,8 +57,6 @@ class ClipAccessibilityService : AccessibilityService() {
         clipboardManager.addPrimaryClipChangedListener(clipListener)
 
         ClipVaultService.start(this)
-
-        // Start polling fallback — if the listener works, this will mostly no-op
         startClipboardPolling()
 
         Log.i(TAG, "Service connected, listener + polling active")
@@ -61,8 +64,7 @@ class ClipAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        // Try to read clipboard on any accessibility event as mid-priority fallback
-        tryReadClipboard("event")
+        processClipboard("event")
     }
 
     override fun onInterrupt() {
@@ -76,6 +78,7 @@ class ClipAccessibilityService : AccessibilityService() {
             clipboardManager.removePrimaryClipChangedListener(clipListener)
         }
         serviceScope.cancel()
+        ClipVaultService.stop(this)
         Log.i(TAG, "Service destroyed")
     }
 
@@ -84,58 +87,77 @@ class ClipAccessibilityService : AccessibilityService() {
             Log.d(TAG, "Polling coroutine started")
             while (isActive) {
                 delay(POLL_INTERVAL_MS)
-                tryReadClipboard("poll")
+                processClipboard("poll")
             }
         }
     }
 
-    private fun tryReadClipboard(source: String) {
-        try {
-            if (!::clipboardManager.isInitialized) return
-            val clip = clipboardManager.primaryClip ?: return
-            if (clip.itemCount == 0) return
+    /**
+     * Single unified method for all capture strategies.
+     * Reads clipboard, deduplicates via Mutex, and saves.
+     */
+    private fun processClipboard(source: String) {
+        val text = readClipboardText() ?: return
 
-            val text = clip.getItemAt(0).coerceToText(this).toString()
-            if (text.isBlank()) return
-            if (text == lastClipText) return
+        serviceScope.launch {
+            clipMutex.withLock {
+                val now = System.currentTimeMillis()
+                if (text == lastClipText && now - lastClipTime < DEBOUNCE_MS) return@launch
+                lastClipText = text
+                lastClipTime = now
+            }
 
-            Log.d(TAG, "New clip via $source")
+            Log.d(TAG, "New clip via $source (${text.length} chars)")
             saveClip(text)
-        } catch (_: Exception) {
-            // Clipboard read can fail silently
         }
     }
 
-    private fun handleClipboardChange(source: String) {
-        try {
-            val clip = clipboardManager.primaryClip ?: return
-            if (clip.itemCount == 0) return
+    /**
+     * Reads current clipboard text. Returns null if unavailable or empty.
+     */
+    private fun readClipboardText(): String? {
+        return try {
+            if (!::clipboardManager.isInitialized) return null
+            val clip = clipboardManager.primaryClip ?: return null
+            if (clip.itemCount == 0) return null
 
             val text = clip.getItemAt(0).coerceToText(this).toString()
-            if (text.isBlank()) return
-
-            val now = System.currentTimeMillis()
-            if (text == lastClipText && now - lastClipTime < 500) return
-
-            saveClip(text)
+            if (text.isBlank()) null else text
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Clipboard access denied (Android restriction): ${e.message}")
+            null
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading clipboard", e)
+            Log.w(TAG, "Clipboard read failed: ${e.message}")
+            null
         }
     }
 
     private fun saveClip(text: String) {
-        lastClipText = text
-        lastClipTime = System.currentTimeMillis()
-
         val app = application as ClipVaultApp
-        val repo = app.repository ?: run {
-            Log.w(TAG, "DB not open yet, dropping clip")
+        val repo = app.repository
+        if (repo == null) {
+            Log.w(TAG, "DB not open yet, retrying in 500ms")
+            serviceScope.launch {
+                delay(500)
+                val retryRepo = (application as ClipVaultApp).repository
+                if (retryRepo != null) {
+                    insertAndNotify(retryRepo, text)
+                } else {
+                    Log.e(TAG, "DB still not open, dropping clip")
+                }
+            }
             return
         }
         serviceScope.launch {
+            insertAndNotify(repo, text)
+        }
+    }
+
+    private suspend fun insertAndNotify(repo: io.celox.clipvault.data.ClipRepository, text: String) {
+        try {
             val id = repo.insert(text)
             Log.d(TAG, "Saved clip id=$id len=${text.length}")
-            launch(Dispatchers.Main) {
+            withContext(Dispatchers.Main) {
                 if (id == -1L) {
                     Toast.makeText(
                         this@ClipAccessibilityService,
@@ -150,6 +172,8 @@ class ClipAccessibilityService : AccessibilityService() {
                     ).show()
                 }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save clip: ${e.message}", e)
         }
     }
 }

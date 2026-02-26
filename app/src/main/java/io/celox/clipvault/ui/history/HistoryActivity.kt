@@ -18,6 +18,9 @@ import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -71,6 +74,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +83,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -95,6 +102,7 @@ import io.celox.clipvault.licensing.LicenseManager
 import io.celox.clipvault.service.ClipAccessibilityService
 import io.celox.clipvault.ui.settings.SettingsActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -476,7 +484,7 @@ fun HistoryScreen(
                                     .padding(horizontal = 12.dp, vertical = 4.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
                                 ),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                             ) {
@@ -664,9 +672,9 @@ fun LockedClipEntryCard(entry: ClipEntry) {
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (entry.pinned)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                MaterialTheme.colorScheme.primaryContainer
             else
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -792,33 +800,30 @@ fun ClipEntryCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 2.dp)
+            .background(
+                if (entry.pinned) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                RoundedCornerShape(12.dp)
+            )
             .animateContentSize()
             .combinedClickable(
                 onClick = onCopy,
                 onLongClick = { expanded = !expanded }
-            ),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (entry.pinned)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            )
+            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = formatTimestamp(entry.timestamp),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = entry.content,
                 style = MaterialTheme.typography.bodyMedium,
@@ -826,36 +831,17 @@ fun ClipEntryCard(
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurface
             )
-
-            AnimatedVisibility(visible = expanded) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    IconButton(onClick = onCopy, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.ContentCopy,
-                            contentDescription = "Kopieren",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(onClick = onToggleFavorite, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            if (entry.pinned) Icons.Filled.Star else Icons.Outlined.Star,
-                            contentDescription = "Favorit",
-                            modifier = Modifier.size(18.dp),
-                            tint = if (entry.pinned)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
+        }
+        IconButton(onClick = onToggleFavorite, modifier = Modifier.size(40.dp)) {
+            Icon(
+                if (entry.pinned) Icons.Filled.Star else Icons.Outlined.Star,
+                contentDescription = "Favorit",
+                modifier = Modifier.size(20.dp),
+                tint = if (entry.pinned)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+            )
         }
     }
 }
@@ -868,39 +854,67 @@ fun SwipeToDeleteContainer(
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
+    var isDismissed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
             if (it == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                isDismissed = true
                 true
             } else false
         }
     )
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 2.dp)
-                    .background(
-                        MaterialTheme.colorScheme.error,
-                        RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Loeschen",
-                    tint = MaterialTheme.colorScheme.onError
-                )
-            }
+
+    // Delay actual deletion so collapse animation can play
+    LaunchedEffect(isDismissed) {
+        if (isDismissed) {
+            delay(350)
+            onDelete()
         }
+    }
+
+    AnimatedVisibility(
+        visible = !isDismissed,
+        exit = shrinkVertically(
+            animationSpec = tween(300)
+        ) + fadeOut(animationSpec = tween(200))
     ) {
-        content()
+        SwipeToDismissBox(
+            state = dismissState,
+            enableDismissFromStartToEnd = false,
+            enableDismissFromEndToStart = true,
+            backgroundContent = {
+                val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+                val bgAlpha by animateFloatAsState(
+                    targetValue = if (isSwiping || isDismissed) 1f else 0f,
+                    animationSpec = tween(if (isSwiping) 100 else 300),
+                    label = "swipe_bg"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp, vertical = 2.dp)
+                        .background(
+                            MaterialTheme.colorScheme.error.copy(alpha = bgAlpha),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Loeschen",
+                        modifier = Modifier.graphicsLayer { alpha = bgAlpha },
+                        tint = MaterialTheme.colorScheme.onError
+                    )
+                }
+            }
+        ) {
+            content()
+        }
     }
 }
 

@@ -4,7 +4,7 @@ Android Clipboard-History-Manager mit Always-On-Verschluesselung und optionaler 
 
 ## Features
 
-- **Automatische Clipboard-Erfassung** via AccessibilityService (Listener + Event-Polling + Timer-Fallback)
+- **Zuverlaessige Clipboard-Erfassung** via AccessibilityService (Listener + Event-Polling + Timer-Fallback, Mutex-geschuetztes Debouncing)
 - **Persistente Speicherung** in lokaler Room-Datenbank
 - **Always-On-Verschluesselung** — Datenbank immer mit SQLCipher (AES-256) verschluesselt, auto-generierte 64-Zeichen-Passphrase im Android KeyStore (StrongBox bevorzugt)
 - **Optionale App-Sperre** — Anzeige manuell sperrbar mit Fingerprint/Gesicht oder eigenem Passwort
@@ -75,7 +75,7 @@ Die Datenbank ist **immer verschluesselt** — es gibt keinen unverschluesselten
 
 ### Datenfluss
 
-1. **Clipboard-Erfassung**: AccessibilityService -> ClipRepository.insert() -> verschluesselte Room DB
+1. **Clipboard-Erfassung**: AccessibilityService (3 Strategien, Mutex-Debouncing) -> ClipRepository.insert() (Mutex-serialisiert) -> verschluesselte Room DB
 2. **UI**: HistoryViewModel <- Flow<List<ClipEntry>> <- ClipDao
 3. **App-Sperre**: HistoryActivity prueft `isAppLockEnabled` -> BiometricPrompt oder Passwort-Dialog
 4. **Lizenz**: LicenseManager.validateAndActivate() -> KeyStoreManager.storeLicenseData()
@@ -107,6 +107,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Aenderung |
 |---|---|
+| 3.1.1 | Clipboard-Erfassung: Mutex-Debouncing, Race-Condition-Fixes, Retry bei DB-Init, Error-Handling |
 | 3.1.0 | Favoriten-Accordion, Swipe-to-Delete, persistente Benachrichtigung |
 | 3.0.0 | Always-On-Verschluesselung, App-Sperre statt optionaler DB-Verschluesselung, StrongBox |
 | 2.0.0 | Settings, Lizenzierung, optionale Verschluesselung, About |
