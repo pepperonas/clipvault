@@ -9,6 +9,10 @@
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-3.5.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
+<p align="center">
+  <img src="clipvault.png" alt="ClipVault" width="400">
+</p>
+
 Android Clipboard-History-Manager mit Always-On-Verschlüsselung und optionaler App-Sperre.
 
 ## Keine INTERNET-Permission
