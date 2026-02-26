@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,8 +19,34 @@ android {
         versionName = "3.5.0"
     }
 
+    signingConfigs {
+        create("release") {
+            // CI: environment variables; Local: local.properties
+            val envStoreFile = System.getenv("RELEASE_STORE_FILE")
+            if (!envStoreFile.isNullOrEmpty()) {
+                storeFile = file(envStoreFile)
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            } else {
+                val props = rootProject.file("local.properties")
+                if (props.exists()) {
+                    val localProps = Properties().apply { props.inputStream().use { load(it) } }
+                    val sf = localProps.getProperty("RELEASE_STORE_FILE", "")
+                    if (sf.isNotEmpty()) {
+                        storeFile = file(sf)
+                        storePassword = localProps.getProperty("RELEASE_STORE_PASSWORD", "")
+                        keyAlias = localProps.getProperty("RELEASE_KEY_ALIAS", "")
+                        keyPassword = localProps.getProperty("RELEASE_KEY_PASSWORD", "")
+                    }
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
