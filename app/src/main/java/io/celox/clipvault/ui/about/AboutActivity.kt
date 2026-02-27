@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -61,6 +62,9 @@ class AboutActivity : FragmentActivity() {
                     onBack = { finish() },
                     onOpenWebsite = {
                         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://celox.io")))
+                    },
+                    onOpenGitHub = {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/pepperonas/clipvault")))
                     }
                 )
             }
@@ -73,7 +77,8 @@ class AboutActivity : FragmentActivity() {
 fun AboutScreen(
     versionName: String,
     onBack: () -> Unit,
-    onOpenWebsite: () -> Unit
+    onOpenWebsite: () -> Unit,
+    onOpenGitHub: () -> Unit
 ) {
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
@@ -153,6 +158,27 @@ fun AboutScreen(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     stringResource(R.string.website_url),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier.clickable(onClick = onOpenGitHub),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Code,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    stringResource(R.string.github_url),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     textDecoration = TextDecoration.Underline

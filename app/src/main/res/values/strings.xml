@@ -153,5 +153,6 @@
     <string name="developer_label">Developer</string>
     <string name="developer_name">Martin Pfeffer</string>
     <string name="website_url">celox.io</string>
+    <string name="github_url">github.com/pepperonas/clipvault</string>
     <string name="copyright">&#169; 2026 Martin Pfeffer. All rights reserved.</string>
 </resources>
