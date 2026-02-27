@@ -18,7 +18,8 @@ import io.celox.clipvault.ui.history.HistoryActivity
 class ClipVaultService : Service() {
 
     companion object {
-        const val CHANNEL_ID = "clipvault_service"
+        private const val OLD_CHANNEL_ID = "clipvault_service"
+        const val CHANNEL_ID = "clipvault_silent"
         const val NOTIFICATION_ID = 1001
         const val ACTION_STOP = "io.celox.clipvault.STOP"
 
@@ -61,8 +62,8 @@ class ClipVaultService : Service() {
 
     private fun createNotificationChannel() {
         val manager = getSystemService(NotificationManager::class.java)
-        // Delete old channel so lowered importance takes effect on existing installs
-        manager.deleteNotificationChannel(CHANNEL_ID)
+        // Delete legacy channel from previous versions
+        manager.deleteNotificationChannel(OLD_CHANNEL_ID)
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.notification_channel_name),
@@ -101,7 +102,7 @@ class ClipVaultService : Service() {
             .setSmallIcon(R.drawable.ic_clipboard)
             .setOngoing(true)
             .setSilent(true)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_DEFERRED)
             .setContentIntent(historyPending)
             .addAction(0, "\u23f9 " + getString(R.string.notification_stop), stopPending)
             .setPriority(NotificationCompat.PRIORITY_MIN)
