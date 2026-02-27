@@ -85,7 +85,7 @@ Multi-activity app with Jetpack Compose screens:
 
 ### Foreground service notification
 
-`ClipVaultService`: channel importance `IMPORTANCE_DEFAULT` with `setSilent(true)`, `setSound(null, null)`, `enableVibration(false)`. Combined with `setOngoing(true)` + `FLAG_ONGOING_EVENT | FLAG_NO_CLEAR` to make the notification non-dismissible but silent.
+`ClipVaultService`: channel `clipvault_silent` with `IMPORTANCE_MIN` + `PRIORITY_MIN` for minimal visual presence. Uses `FOREGROUND_SERVICE_DEFERRED` to avoid prominence boost. Combined with `setSilent(true)`, `setOngoing(true)` + `FLAG_ONGOING_EVENT | FLAG_NO_CLEAR` to make the notification non-dismissible but silent. Legacy channel `clipvault_service` is deleted on start for cleanup. When changing channel importance, use a new channel ID — Android caches importance and won't lower it on an existing channel.
 
 ### Localization
 
