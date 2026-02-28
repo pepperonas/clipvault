@@ -50,6 +50,16 @@ ClipVault works **completely offline**. The app has the INTERNET permission expl
 - **Foreground service** with persistent notification
 - **No clip limits** -- store unlimited clips
 
+## Screenshots
+
+| Clipboard History | IBAN Filter | Statistics |
+|:-:|:-:|:-:|
+| <img src="screenshots/01_history_main.png" width="250"> | <img src="screenshots/04_iban_filter.png" width="250"> | <img src="screenshots/05_statistics.png" width="250"> |
+
+| Settings | Menu | About |
+|:-:|:-:|:-:|
+| <img src="screenshots/03_settings.png" width="250"> | <img src="screenshots/02_menu.png" width="250"> | <img src="screenshots/06_about.png" width="250"> |
+
 ## Installation
 
 ### APK from GitHub
