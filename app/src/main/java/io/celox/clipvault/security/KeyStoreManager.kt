@@ -34,6 +34,9 @@ class KeyStoreManager(context: Context) {
         // Display preferences
         private const val KEY_AMOLED_MODE = "amoled_mode"
 
+        // Auto-cleanup
+        private const val KEY_AUTO_CLEANUP_DAYS = "auto_cleanup_days"
+
         // Legacy keys (v1/v2 migration — read-only, then cleared)
         private const val KEY_LEGACY_PASSWORD = "encrypted_passphrase"
         private const val KEY_LEGACY_IV = "passphrase_iv"
@@ -71,6 +74,14 @@ class KeyStoreManager(context: Context) {
 
     fun setAmoledMode(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_AMOLED_MODE, enabled).apply()
+    }
+
+    // --- Auto-cleanup ---
+
+    fun getAutoCleanupDays(): Int = prefs.getInt(KEY_AUTO_CLEANUP_DAYS, 0)
+
+    fun setAutoCleanupDays(days: Int) {
+        prefs.edit().putInt(KEY_AUTO_CLEANUP_DAYS, days).apply()
     }
 
     // --- App Lock (optional UI lock) ---
@@ -177,7 +188,7 @@ class KeyStoreManager(context: Context) {
     }
 
     private fun generateRandomPassphrase(length: Int): String {
-        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%&*+-=?"
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*+-=?"
         val random = SecureRandom()
         return (1..length).map { chars[random.nextInt(chars.length)] }.joinToString("")
     }

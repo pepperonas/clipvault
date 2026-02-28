@@ -106,12 +106,14 @@
     <string name="guide_copy_title">2. Copy clips</string>
     <string name="guide_copy_text">Tap an entry to copy it to the clipboard. Long press to open Smart Actions \u2014 context-aware actions like opening URLs, calling phone numbers, or sending emails. Use the small arrow to expand/collapse long entries.</string>
     <string name="guide_favorites_title">3. Favorites</string>
-    <string name="guide_favorites_text">Tap the star icon to mark a clip as a favorite. Favorites appear in a collapsible section at the top of the list and are preserved when deleting all clips.</string>
+    <string name="guide_favorites_text">Tap the star icon or swipe right to pin a clip as a favorite. Favorites appear in a collapsible section at the top of the list and are preserved when deleting all clips.</string>
     <string name="guide_delete_title">4. Delete</string>
     <string name="guide_delete_text">Swipe an entry to the left to delete it. After deleting, an \"Undo\" option briefly appears. Use the trash icon at the top to delete all non-favorited clips at once.</string>
-    <string name="guide_search_title">5. Search</string>
+    <string name="guide_filter_title">5. Filter</string>
+    <string name="guide_filter_text">Use the filter chips above the list to filter by content type. Tap a chip to show only entries of that type, tap again to deselect.</string>
+    <string name="guide_search_title">6. Search</string>
     <string name="guide_search_text">Tap the magnifying glass in the top bar to search for clips. The search filters in real-time by the entered text.</string>
-    <string name="guide_applock_title">6. App lock</string>
+    <string name="guide_applock_title">7. App lock</string>
     <string name="guide_applock_text">In the settings you can enable an app lock. Choose between fingerprint/face recognition or a custom password. The lock protects the display \u2014 the database remains always encrypted.</string>
 
     <!-- Setup banner -->
@@ -205,6 +207,35 @@
     <string name="backup_import_success">Import complete: %d entries added</string>
     <string name="backup_wrong_password">Wrong password or corrupt file</string>
     <string name="backup_invalid_file">Invalid backup file</string>
+    <string name="error_enter_password">Enter a password</string>
+    <string name="ok">OK</string>
+
+    <!-- Maintenance / Auto-Cleanup -->
+    <string name="section_maintenance">Maintenance</string>
+    <string name="auto_cleanup_title">Auto-cleanup</string>
+    <string name="auto_cleanup_disabled">Disabled</string>
+    <string name="auto_cleanup_days">%d days</string>
+    <string name="auto_cleanup_subtitle_disabled">Old entries are kept forever</string>
+    <string name="auto_cleanup_subtitle_active">Entries older than %d days are deleted on startup</string>
+    <string name="auto_cleanup_favorites_safe">Favorites are never deleted.</string>
+    <string name="auto_cleanup_dialog_title">Auto-cleanup period</string>
+
+    <!-- Sort -->
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_oldest">Oldest first</string>
+    <string name="sort_a_z">A \u2192 Z</string>
+    <string name="sort_z_a">Z \u2192 A</string>
+    <string name="sort_longest">Longest first</string>
+    <string name="sort_shortest">Shortest first</string>
+
+    <!-- Share Target -->
+    <string name="share_received">Saved to ClipVault</string>
+
+    <!-- Batch Operations -->
+    <string name="batch_selected_count">%d selected</string>
+    <string name="batch_select_all">Select all</string>
+    <string name="batch_deleted">%d deleted</string>
+    <string name="batch_pinned">%d pinned</string>
 
     <!-- About screen -->
     <string name="about_title">About ClipVault</string>

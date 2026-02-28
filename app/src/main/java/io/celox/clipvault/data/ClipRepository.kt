@@ -80,6 +80,13 @@ class ClipRepository(
 
     suspend fun exportAll(): List<ClipEntry> = dao.getAllEntriesSnapshot()
 
+    suspend fun autoCleanup(days: Int): Int {
+        val cutoff = System.currentTimeMillis() - (days * 86_400_000L)
+        return dao.deleteOlderThan(cutoff)
+    }
+
+    suspend fun deleteBatch(ids: List<Long>) = dao.deleteBatch(ids)
+
     suspend fun importEntries(entries: List<ClipEntry>): Int {
         var imported = 0
         for (entry in entries) {

@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -279,7 +280,7 @@ private fun ContentTypeChart(entries: List<ClipEntry>) {
                             textAlign = android.graphics.Paint.Align.CENTER
                             textSize = 36f
                             isFakeBoldText = true
-                            color = surfaceColor.hashCode()
+                            color = surfaceColor.toArgb()
                         }
                         drawText(
                             entries.size.toString(),
@@ -405,7 +406,7 @@ private fun WeeklyActivityChart(entries: List<ClipEntry>) {
                             android.graphics.Paint().apply {
                                 textAlign = android.graphics.Paint.Align.CENTER
                                 textSize = 24f
-                                color = labelColor.hashCode()
+                                color = labelColor.toArgb()
                             }
                         )
                     }

@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Brightness2
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Fingerprint
@@ -41,7 +43,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -101,6 +105,8 @@ class SettingsActivity : FragmentActivity() {
             var showAppLockDialog by remember { mutableStateOf(false) }
             var showDisableAppLockDialog by remember { mutableStateOf(false) }
             var showChangePasswordDialog by remember { mutableStateOf(false) }
+            var autoCleanupDays by remember { mutableStateOf(ksm.getAutoCleanupDays()) }
+            var showAutoCleanupDialog by remember { mutableStateOf(false) }
             var showExportPasswordDialog by remember { mutableStateOf(false) }
             var showImportPasswordDialog by remember { mutableStateOf(false) }
             var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
@@ -134,6 +140,7 @@ class SettingsActivity : FragmentActivity() {
                     biometricEnabled = biometricEnabled,
                     passwordGenerated = passwordGenerated,
                     amoledMode = amoledMode,
+                    autoCleanupDays = autoCleanupDays,
                     versionName = versionName,
                     onBack = { finish() },
                     onToggleAppLock = { enabled ->
@@ -152,6 +159,7 @@ class SettingsActivity : FragmentActivity() {
                         ksm.setAmoledMode(enabled)
                         amoledMode = enabled
                     },
+                    onAutoCleanupClick = { showAutoCleanupDialog = true },
                     onOpenAbout = {
                         startActivity(Intent(this, AboutActivity::class.java))
                     },
@@ -163,6 +171,18 @@ class SettingsActivity : FragmentActivity() {
                         importLauncher.launch(arrayOf("*/*"))
                     }
                 )
+
+                if (showAutoCleanupDialog) {
+                    AutoCleanupDialog(
+                        currentDays = autoCleanupDays,
+                        onDismiss = { showAutoCleanupDialog = false },
+                        onConfirm = { days ->
+                            showAutoCleanupDialog = false
+                            ksm.setAutoCleanupDays(days)
+                            autoCleanupDays = days
+                        }
+                    )
+                }
 
                 if (showAppLockDialog) {
                     AppLockSetupDialog(
@@ -351,12 +371,14 @@ fun SettingsScreen(
     biometricEnabled: Boolean,
     passwordGenerated: Boolean,
     amoledMode: Boolean,
+    autoCleanupDays: Int,
     versionName: String,
     onBack: () -> Unit,
     onToggleAppLock: (Boolean) -> Unit,
     onChangePassword: () -> Unit,
     onToggleBiometric: (Boolean) -> Unit,
     onToggleAmoled: (Boolean) -> Unit,
+    onAutoCleanupClick: () -> Unit,
     onOpenAbout: () -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit
@@ -469,6 +491,21 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
+            // --- Maintenance Section ---
+            SectionHeader(stringResource(R.string.section_maintenance))
+
+            SettingsClickItem(
+                icon = Icons.Default.CleaningServices,
+                title = stringResource(R.string.auto_cleanup_title),
+                subtitle = if (autoCleanupDays == 0)
+                    stringResource(R.string.auto_cleanup_subtitle_disabled)
+                else
+                    stringResource(R.string.auto_cleanup_subtitle_active, autoCleanupDays),
+                onClick = onAutoCleanupClick
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
             // --- Info Section ---
             SectionHeader(stringResource(R.string.section_info))
 
@@ -577,6 +614,8 @@ fun BackupPasswordDialog(
     var error by remember { mutableStateOf<String?>(null) }
 
     val mismatchMsg = stringResource(R.string.backup_password_mismatch)
+    val emptyPasswordMsg = stringResource(R.string.error_enter_password)
+    val okLabel = stringResource(R.string.ok)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -621,12 +660,12 @@ fun BackupPasswordDialog(
         confirmButton = {
             TextButton(onClick = {
                 when {
-                    password.isEmpty() -> error = "Enter a password"
+                    password.isEmpty() -> error = emptyPasswordMsg
                     isExport && password != confirmPassword -> error = mismatchMsg
                     else -> onConfirm(password)
                 }
             }) {
-                Text("OK")
+                Text(okLabel)
             }
         },
         dismissButton = {
@@ -842,6 +881,63 @@ fun ChangePasswordDialog(
                 }
             }) {
                 Text(stringResource(R.string.change_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+// --- Auto-Cleanup Dialog ---
+
+@Composable
+fun AutoCleanupDialog(
+    currentDays: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    val options = listOf(0, 7, 30, 90, 180, 365)
+    var selected by remember { mutableStateOf(currentDays) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.auto_cleanup_dialog_title)) },
+        text = {
+            Column {
+                options.forEach { days ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selected = days }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selected == days,
+                            onClick = { selected = days }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            if (days == 0) stringResource(R.string.auto_cleanup_disabled)
+                            else stringResource(R.string.auto_cleanup_days, days),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.auto_cleanup_favorites_safe),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selected) }) {
+                Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {

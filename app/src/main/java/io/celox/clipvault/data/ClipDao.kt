@@ -43,4 +43,10 @@ interface ClipDao {
 
     @Query("SELECT * FROM clip_entries WHERE content = :content AND timestamp = :timestamp LIMIT 1")
     suspend fun findByContentAndTimestamp(content: String, timestamp: Long): ClipEntry?
+
+    @Query("DELETE FROM clip_entries WHERE pinned = 0 AND timestamp < :cutoffTimestamp")
+    suspend fun deleteOlderThan(cutoffTimestamp: Long): Int
+
+    @Query("DELETE FROM clip_entries WHERE id IN (:ids)")
+    suspend fun deleteBatch(ids: List<Long>)
 }

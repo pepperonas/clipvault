@@ -1,6 +1,7 @@
 package io.celox.clipvault.util
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ContentTypeDetectionTest {
@@ -166,5 +167,69 @@ class ContentTypeDetectionTest {
     fun `code has higher priority than address`() {
         // "import something" should be code, not address
         assertEquals(ContentType.CODE, detectContentType("import java.util.List"))
+    }
+
+    // --- Edge-case tests ---
+
+    @Test
+    fun `empty string and whitespace return TEXT`() {
+        assertEquals(ContentType.TEXT, detectContentType(""))
+        assertEquals(ContentType.TEXT, detectContentType("   "))
+        assertEquals(ContentType.TEXT, detectContentType("\t\n"))
+    }
+
+    @Test
+    fun `URL with coordinate-like numbers is URL not COORDINATES`() {
+        assertEquals(ContentType.URL, detectContentType("https://example.com/48.8566,2.3522"))
+        assertEquals(ContentType.URL, detectContentType("http://maps.google.com/-33.8688,151.2093"))
+    }
+
+    @Test
+    fun `invalid hex colors return TEXT`() {
+        assertEquals(ContentType.TEXT, detectContentType("#GGG"))
+        assertEquals(ContentType.TEXT, detectContentType("#12345"))
+        assertEquals(ContentType.TEXT, detectContentType("#"))
+    }
+
+    @Test
+    fun `too short IBAN returns TEXT`() {
+        assertEquals(ContentType.TEXT, detectContentType("DE89"))
+    }
+
+    @Test
+    fun `too long IBAN matches PHONE due to digit count`() {
+        // Long numeric string matches phone pattern, not IBAN
+        assertEquals(ContentType.PHONE, detectContentType("DE8937040044053201300012345678901234567"))
+    }
+
+    @Test
+    fun `IBAN with invalid characters does not match IBAN`() {
+        // "DE89 3704 0044 @@@@" — the digit portion matches phone
+        val result = detectContentType("DE89 3704 0044 @@@@")
+        assertTrue(result != ContentType.IBAN)
+    }
+
+    @Test
+    fun `markdown with URL is MARKDOWN not URL`() {
+        assertEquals(ContentType.MARKDOWN, detectContentType("[link](https://example.com)"))
+        assertEquals(ContentType.MARKDOWN, detectContentType("Click [here](http://test.com) to continue"))
+    }
+
+    @Test
+    fun `multi-line code snippet is CODE`() {
+        assertEquals(ContentType.CODE, detectContentType("fun main() {\n    println(\"Hello\")\n}"))
+        assertEquals(ContentType.CODE, detectContentType("const x = 1\nconst y = 2"))
+    }
+
+    @Test
+    fun `social media URL mixed with text is detected`() {
+        assertEquals(ContentType.INSTAGRAM, detectContentType("Check out https://instagram.com/p/test123"))
+        assertEquals(ContentType.YOUTUBE, detectContentType("Watch this: youtube.com/watch?v=abc"))
+    }
+
+    @Test
+    fun `JSON-like text that is not JSON returns TEXT`() {
+        assertEquals(ContentType.TEXT, detectContentType("I said {hello} to you"))
+        assertEquals(ContentType.TEXT, detectContentType("{no quotes here}"))
     }
 }

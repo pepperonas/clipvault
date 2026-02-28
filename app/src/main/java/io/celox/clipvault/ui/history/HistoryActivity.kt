@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,6 +48,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
@@ -57,6 +62,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
@@ -64,10 +70,13 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -117,12 +126,14 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import io.celox.clipvault.R
 import io.celox.clipvault.ClipVaultApp
 import io.celox.clipvault.data.ClipEntry
 import io.celox.clipvault.service.ClipAccessibilityService
 import io.celox.clipvault.util.ContentType
 import io.celox.clipvault.util.SmartActionType
+import io.celox.clipvault.util.SortOrder
 import io.celox.clipvault.util.detectContentType
 import io.celox.clipvault.ui.settings.SettingsActivity
 import io.celox.clipvault.ui.statistics.StatisticsActivity
@@ -156,6 +167,17 @@ class HistoryActivity : FragmentActivity() {
         // If app lock is not enabled, start unlocked
         if (!app.isAppLockEnabled) {
             viewModel?.unlock()
+        }
+
+        // Handle Share Target intent
+        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+            if (!text.isNullOrBlank()) {
+                lifecycleScope.launch {
+                    app.repository?.insert(text)
+                    Toast.makeText(this@HistoryActivity, getString(R.string.share_received), Toast.LENGTH_SHORT).show()
+                }
+            }
         }
 
         requestNotificationPermission()
@@ -438,9 +460,16 @@ fun HistoryScreen(
         ?: remember { mutableStateOf(null) })
     val contentTypeCounts by (viewModel?.contentTypeCounts?.collectAsState()
         ?: remember { mutableStateOf(emptyMap()) })
+    val sortOrder by (viewModel?.sortOrder?.collectAsState()
+        ?: remember { mutableStateOf(SortOrder.NEWEST) })
+    val selectionMode by (viewModel?.selectionMode?.collectAsState()
+        ?: remember { mutableStateOf(false) })
+    val selectedIds by (viewModel?.selectedIds?.collectAsState()
+        ?: remember { mutableStateOf(emptySet()) })
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var showGuide by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     var selectedEntry by remember { mutableStateOf<ClipEntry?>(null) }
     var showOverflowMenu by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -450,83 +479,159 @@ fun HistoryScreen(
     val pinnedMsg = stringResource(R.string.action_pinned)
     val unpinnedMsg = stringResource(R.string.action_unpinned)
 
+    // Back handler for selection mode
+    BackHandler(enabled = selectionMode) {
+        viewModel?.exitSelectionMode()
+    }
+
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            if (selectionMode) {
+                // Selection mode top bar
+                TopAppBar(
+                    title = {
                         Text(
-                            when {
-                                appLockEnabled && !isUnlocked -> stringResource(R.string.status_locked)
-                                accessibilityEnabled -> stringResource(R.string.status_active, entries.size)
-                                else -> stringResource(R.string.status_inactive)
-                            },
-                            fontSize = 12.sp,
-                            color = when {
-                                appLockEnabled && !isUnlocked -> MaterialTheme.colorScheme.onSurfaceVariant
-                                accessibilityEnabled -> MaterialTheme.colorScheme.primary
-                                else -> MaterialTheme.colorScheme.error
-                            }
+                            stringResource(R.string.batch_selected_count, selectedIds.size),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
                         )
-                    }
-                },
-                actions = {
-                    if (isUnlocked) {
-                        IconButton(onClick = { showSearch = !showSearch }) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { viewModel?.exitSelectionMode() }) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
                         }
-                        IconButton(onClick = { showDeleteAllDialog = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.delete_all))
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel?.selectAll() }) {
+                            Icon(Icons.Default.SelectAll, contentDescription = stringResource(R.string.batch_select_all))
                         }
-                        if (appLockEnabled) {
-                            IconButton(onClick = onLock) {
-                                Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.lock))
+                        IconButton(onClick = { viewModel?.pinSelected() }) {
+                            Icon(Icons.Filled.PushPin, contentDescription = stringResource(R.string.action_pinned))
+                        }
+                        IconButton(onClick = { viewModel?.deleteSelected() }) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
+            } else {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            Text(
+                                when {
+                                    appLockEnabled && !isUnlocked -> stringResource(R.string.status_locked)
+                                    accessibilityEnabled -> stringResource(R.string.status_active, entries.size)
+                                    else -> stringResource(R.string.status_inactive)
+                                },
+                                fontSize = 12.sp,
+                                color = when {
+                                    appLockEnabled && !isUnlocked -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    accessibilityEnabled -> MaterialTheme.colorScheme.primary
+                                    else -> MaterialTheme.colorScheme.error
+                                }
+                            )
+                        }
+                    },
+                    actions = {
+                        if (isUnlocked) {
+                            IconButton(onClick = { showSearch = !showSearch }) {
+                                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                            }
+                            // Sort button with indicator
+                            Box {
+                                IconButton(onClick = { showSortMenu = true }) {
+                                    if (sortOrder != SortOrder.NEWEST) {
+                                        BadgedBox(badge = {
+                                            Badge(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(8.dp)
+                                            )
+                                        }) {
+                                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null)
+                                        }
+                                    } else {
+                                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null)
+                                    }
+                                }
+                                DropdownMenu(
+                                    expanded = showSortMenu,
+                                    onDismissRequest = { showSortMenu = false }
+                                ) {
+                                    SortOrder.entries.forEach { order ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(stringResource(order.labelRes))
+                                                    if (sortOrder == order) {
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text("\u2713", color = MaterialTheme.colorScheme.primary)
+                                                    }
+                                                }
+                                            },
+                                            onClick = {
+                                                viewModel?.setSortOrder(order)
+                                                showSortMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            IconButton(onClick = { showDeleteAllDialog = true }) {
+                                Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.delete_all))
+                            }
+                            if (appLockEnabled) {
+                                IconButton(onClick = onLock) {
+                                    Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.lock))
+                                }
+                            }
+                        } else if (appLockEnabled) {
+                            IconButton(onClick = onRequestUnlock) {
+                                Icon(Icons.Default.LockOpen, contentDescription = stringResource(R.string.unlock))
                             }
                         }
-                    } else if (appLockEnabled) {
-                        IconButton(onClick = onRequestUnlock) {
-                            Icon(Icons.Default.LockOpen, contentDescription = stringResource(R.string.unlock))
+                        Box {
+                            IconButton(onClick = { showOverflowMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = null)
+                            }
+                            DropdownMenu(
+                                expanded = showOverflowMenu,
+                                onDismissRequest = { showOverflowMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_statistics)) },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        onOpenStatistics()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.guide)) },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        showGuide = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.settings)) },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        onOpenSettings()
+                                    }
+                                )
+                            }
                         }
-                    }
-                    Box {
-                        IconButton(onClick = { showOverflowMenu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = null)
-                        }
-                        DropdownMenu(
-                            expanded = showOverflowMenu,
-                            onDismissRequest = { showOverflowMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.menu_statistics)) },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    onOpenStatistics()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.guide)) },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    showGuide = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.settings)) },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    onOpenSettings()
-                                }
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-            )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -619,8 +724,8 @@ fun HistoryScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Favorites Accordion
-                    if (favorites.isNotEmpty()) {
+                    // Favorites Accordion (hidden in selection mode)
+                    if (favorites.isNotEmpty() && !selectionMode) {
                         item(key = "favorites_header") {
                             val chevronRotation by animateFloatAsState(
                                 targetValue = if (favoritesExpanded) 0f else -90f,
@@ -707,39 +812,48 @@ fun HistoryScreen(
                         }
                     }
 
-                    // Regular entries
-                    items(items = nonFavorites, key = { it.id }) { entry ->
-                        SwipeableClipContainer(
-                            entry = entry,
-                            onDelete = {
-                                viewModel?.delete(entry)
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = deletedMsg,
-                                        actionLabel = undoLabel,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel?.reInsert(entry)
+                    // All entries in selection mode, or non-favorites in normal mode
+                    val displayEntries = if (selectionMode) entries else nonFavorites
+                    items(items = displayEntries, key = { it.id }) { entry ->
+                        if (selectionMode) {
+                            SelectableClipEntryCard(
+                                entry = entry,
+                                isSelected = entry.id in selectedIds,
+                                onToggleSelection = { viewModel?.toggleSelection(entry.id) }
+                            )
+                        } else {
+                            SwipeableClipContainer(
+                                entry = entry,
+                                onDelete = {
+                                    viewModel?.delete(entry)
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = deletedMsg,
+                                            actionLabel = undoLabel,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel?.reInsert(entry)
+                                        }
+                                    }
+                                },
+                                onTogglePin = {
+                                    viewModel?.togglePin(entry)
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = if (entry.pinned) unpinnedMsg else pinnedMsg,
+                                            duration = SnackbarDuration.Short
+                                        )
                                     }
                                 }
-                            },
-                            onTogglePin = {
-                                viewModel?.togglePin(entry)
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = if (entry.pinned) unpinnedMsg else pinnedMsg,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
+                            ) {
+                                ClipEntryCard(
+                                    entry = entry,
+                                    onCopy = { onCopyToClipboard(entry.content) },
+                                    onLongPress = { viewModel?.enterSelectionMode(entry.id) },
+                                    onToggleFavorite = { viewModel?.togglePin(entry) }
+                                )
                             }
-                        ) {
-                            ClipEntryCard(
-                                entry = entry,
-                                onCopy = { onCopyToClipboard(entry.content) },
-                                onLongPress = { selectedEntry = entry },
-                                onToggleFavorite = { viewModel?.togglePin(entry) }
-                            )
                         }
                     }
 
@@ -898,6 +1012,10 @@ fun GuideDialog(onDismiss: () -> Unit) {
                 GuideSection(
                     title = stringResource(R.string.guide_delete_title),
                     text = stringResource(R.string.guide_delete_text)
+                )
+                GuideSection(
+                    title = stringResource(R.string.guide_filter_title),
+                    text = stringResource(R.string.guide_filter_text)
                 )
                 GuideSection(
                     title = stringResource(R.string.guide_search_title),
@@ -1168,7 +1286,10 @@ fun ClipEntryCard(
             )
             .animateContentSize()
             .combinedClickable(
-                onClick = onCopy,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onCopy()
+                },
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongPress()
@@ -1219,6 +1340,75 @@ fun ClipEntryCard(
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             )
         }
+    }
+}
+
+// --- Selectable Clip Entry Card (Batch Mode) ---
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SelectableClipEntryCard(
+    entry: ClipEntry,
+    isSelected: Boolean,
+    onToggleSelection: () -> Unit
+) {
+    val contentType = remember(entry.content) { detectContentType(entry.content) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 2.dp)
+            .background(
+                if (isSelected)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                else if (entry.pinned)
+                    MaterialTheme.colorScheme.primaryContainer
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                RoundedCornerShape(12.dp)
+            )
+            .combinedClickable(
+                onClick = onToggleSelection
+            )
+            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = isSelected,
+            onCheckedChange = { onToggleSelection() },
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = formatTimestamp(LocalContext.current, entry.timestamp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+                if (entry.pinned) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        Icons.Filled.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = entry.content,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        ContentTypeIcon(
+            contentType = contentType,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }
 

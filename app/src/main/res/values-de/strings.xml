@@ -103,12 +103,14 @@
     <string name="guide_copy_title">2. Clips kopieren</string>
     <string name="guide_copy_text">Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. Langer Druck \u00f6ffnet Smart Actions \u2014 kontextabh\u00e4ngige Aktionen wie URLs \u00f6ffnen, Telefonnummern anrufen oder E-Mails senden. Mit dem kleinen Pfeil kannst du lange Eintr\u00e4ge auf-/zuklappen.</string>
     <string name="guide_favorites_title">3. Favoriten</string>
-    <string name="guide_favorites_text">Tippe auf das Stern-Symbol, um einen Clip als Favorit zu markieren. Favoriten erscheinen in einer eigenen aufklappbaren Sektion am Anfang der Liste und werden beim L\u00f6schen aller Clips beibehalten.</string>
+    <string name="guide_favorites_text">Tippe auf das Stern-Symbol oder wische nach rechts, um einen Clip als Favorit zu pinnen. Favoriten erscheinen in einer eigenen aufklappbaren Sektion am Anfang der Liste und werden beim L\u00f6schen aller Clips beibehalten.</string>
     <string name="guide_delete_title">4. L\u00f6schen</string>
     <string name="guide_delete_text">Wische einen Eintrag nach links, um ihn zu l\u00f6schen. Nach dem L\u00f6schen erscheint kurz eine \"R\u00fcckg\u00e4ngig\"-Option. \u00dcber das Papierkorb-Symbol oben kannst du alle nicht-favorisierten Clips auf einmal l\u00f6schen.</string>
-    <string name="guide_search_title">5. Suche</string>
+    <string name="guide_filter_title">5. Filter</string>
+    <string name="guide_filter_text">Nutze die Filter-Chips \u00fcber der Liste, um nach Inhaltstyp zu filtern. Tippe auf einen Chip, um nur Eintr\u00e4ge dieses Typs anzuzeigen, erneut tippen zum Abw\u00e4hlen.</string>
+    <string name="guide_search_title">6. Suche</string>
     <string name="guide_search_text">Tippe auf die Lupe in der oberen Leiste, um nach Clips zu suchen. Die Suche filtert in Echtzeit nach dem eingegebenen Text.</string>
-    <string name="guide_applock_title">6. App-Sperre</string>
+    <string name="guide_applock_title">7. App-Sperre</string>
     <string name="guide_applock_text">In den Einstellungen kannst du eine App-Sperre aktivieren. W\u00e4hle zwischen Fingerabdruck/Gesichtserkennung oder einem eigenen Passwort. Die Sperre sch\u00fctzt die Anzeige \u2014 die Datenbank bleibt immer verschl\u00fcsselt.</string>
 
     <!-- Setup banner -->
@@ -202,6 +204,35 @@
     <string name="backup_import_success">Import abgeschlossen: %d Eintr\u00e4ge hinzugef\u00fcgt</string>
     <string name="backup_wrong_password">Falsches Passwort oder besch\u00e4digte Datei</string>
     <string name="backup_invalid_file">Ung\u00fcltige Backup-Datei</string>
+    <string name="error_enter_password">Passwort eingeben</string>
+    <string name="ok">OK</string>
+
+    <!-- Maintenance / Auto-Cleanup -->
+    <string name="section_maintenance">Wartung</string>
+    <string name="auto_cleanup_title">Auto-Bereinigung</string>
+    <string name="auto_cleanup_disabled">Deaktiviert</string>
+    <string name="auto_cleanup_days">%d Tage</string>
+    <string name="auto_cleanup_subtitle_disabled">Alte Eintr\u00e4ge werden unbegrenzt aufbewahrt</string>
+    <string name="auto_cleanup_subtitle_active">Eintr\u00e4ge \u00e4lter als %d Tage werden beim Start gel\u00f6scht</string>
+    <string name="auto_cleanup_favorites_safe">Favoriten werden nie gel\u00f6scht.</string>
+    <string name="auto_cleanup_dialog_title">Auto-Bereinigung Zeitraum</string>
+
+    <!-- Sort -->
+    <string name="sort_newest">Neueste zuerst</string>
+    <string name="sort_oldest">\u00c4lteste zuerst</string>
+    <string name="sort_a_z">A \u2192 Z</string>
+    <string name="sort_z_a">Z \u2192 A</string>
+    <string name="sort_longest">L\u00e4ngste zuerst</string>
+    <string name="sort_shortest">K\u00fcrzeste zuerst</string>
+
+    <!-- Share Target -->
+    <string name="share_received">In ClipVault gespeichert</string>
+
+    <!-- Batch Operations -->
+    <string name="batch_selected_count">%d ausgew\u00e4hlt</string>
+    <string name="batch_select_all">Alle ausw\u00e4hlen</string>
+    <string name="batch_deleted">%d gel\u00f6scht</string>
+    <string name="batch_pinned">%d angepinnt</string>
 
     <!-- About screen -->
     <string name="about_title">\u00dcber ClipVault</string>

@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-4.2.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-4.3.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -38,6 +38,11 @@ ClipVault works **completely offline**. The app has the INTERNET permission expl
 - **Smart Actions** -- long-press for context-aware actions (open URL, call, email, share, maps)
 - **Statistics screen** -- summary cards, content type donut chart, weekly activity bar chart
 - **Export/Import backup** -- AES-256-GCM encrypted backups with PBKDF2 key derivation, password-protected `.cvbk` files
+- **Auto-cleanup** -- optional automatic deletion of old entries (7/30/90/180/365 days), favorites are never deleted
+- **Sort options** -- sort by newest, oldest, A-Z, Z-A, longest, shortest
+- **Share target** -- receive text from other apps via Android share menu
+- **Batch operations** -- long-press to enter selection mode, multi-select with select all, batch delete and pin
+- **Haptic feedback** -- tactile confirmation when copying clips
 - **AMOLED mode** -- true black background for OLED displays
 - **Built-in guide** -- help dialog directly in the app
 - **Search** and clip management
@@ -102,12 +107,13 @@ io.celox.clipvault/
 │   ├── ContentType.kt               # 18 content type enum (icon, color, label)
 │   ├── ContentTypeDetector.kt       # Content type detection logic
 │   ├── SmartAction.kt               # Smart action definitions
+│   ├── SortOrder.kt                 # Sort order enum (6 options)
 │   └── BackupCrypto.kt              # AES-256-GCM backup encryption
 └── ui/
     ├── theme/Theme.kt               # Material 3 Theme (+ AMOLED mode)
     ├── history/
-    │   ├── HistoryActivity.kt       # Main screen (filter chips, swipe actions)
-    │   ├── HistoryViewModel.kt      # ViewModel (content type filtering)
+    │   ├── HistoryActivity.kt       # Main screen (filter, swipe, sort, batch, share)
+    │   ├── HistoryViewModel.kt      # ViewModel (filter, sort, batch selection)
     │   └── SmartActionBottomSheet.kt # Context-aware action sheet
     ├── statistics/StatisticsActivity.kt # Statistics with charts
     ├── settings/SettingsActivity.kt  # Settings (app lock, backup, display)
@@ -149,6 +155,7 @@ This project uses [Semantic Versioning](https://semver.org/):
 
 | Version | Change |
 |---|---|
+| 4.3.0 | Auto-cleanup, sort options, share target, batch operations, haptic feedback, guide update |
 | 4.2.0 | Version bump |
 | 4.1.0 | Content type filter chips, swipe-right-to-pin, statistics screen with charts, encrypted export/import backup (.cvbk) |
 | 4.0.0 | Extended content type detection (18 types), Smart Actions bottom sheet, AMOLED mode |

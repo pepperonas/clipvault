@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-4.2.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-4.3.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -38,6 +38,11 @@ ClipVault funktioniert **vollständig offline**. Die App hat die INTERNET-Permis
 - **Smart Actions** — langer Druck für kontextabhängige Aktionen (URL öffnen, Anrufen, E-Mail, Teilen, Karten)
 - **Statistik-Screen** — Zusammenfassungskarten, Inhaltstyp-Donut-Chart, Wochen-Aktivitäts-Balkendiagramm
 - **Export/Import-Backup** — AES-256-GCM verschlüsselte Backups mit PBKDF2-Schlüsselableitung, passwortgeschützte `.cvbk`-Dateien
+- **Auto-Bereinigung** — optionale automatische Löschung alter Einträge (7/30/90/180/365 Tage), Favoriten werden nie gelöscht
+- **Sortier-Optionen** — sortieren nach Neueste, Älteste, A-Z, Z-A, Längste, Kürzeste
+- **Share-Target** — Text aus anderen Apps über das Android-Teilen-Menü empfangen
+- **Batch-Operationen** — langer Druck für Auswahl-Modus, Mehrfach-Auswahl mit Alle-Auswählen, Batch-Löschen und -Pinnen
+- **Haptisches Feedback** — taktile Bestätigung beim Kopieren von Clips
 - **AMOLED-Modus** — reines Schwarz für OLED-Displays
 - **Integrierte Anleitung** — Hilfe-Dialog direkt in der App
 - **Suche** und Clip-Verwaltung
@@ -102,12 +107,13 @@ io.celox.clipvault/
 │   ├── ContentType.kt               # 18 Content-Type-Enum (Icon, Farbe, Label)
 │   ├── ContentTypeDetector.kt       # Content-Type-Erkennungslogik
 │   ├── SmartAction.kt               # Smart-Action-Definitionen
+│   ├── SortOrder.kt                 # Sortier-Enum (6 Optionen)
 │   └── BackupCrypto.kt              # AES-256-GCM Backup-Verschlüsselung
 └── ui/
     ├── theme/Theme.kt               # Material 3 Theme (+ AMOLED-Modus)
     ├── history/
-    │   ├── HistoryActivity.kt       # Hauptscreen (Filter-Chips, Swipe-Aktionen)
-    │   ├── HistoryViewModel.kt      # ViewModel (Content-Type-Filterung)
+    │   ├── HistoryActivity.kt       # Hauptscreen (Filter, Swipe, Sort, Batch, Share)
+    │   ├── HistoryViewModel.kt      # ViewModel (Filter, Sort, Batch-Auswahl)
     │   └── SmartActionBottomSheet.kt # Kontextabhängige Aktionen
     ├── statistics/StatisticsActivity.kt # Statistiken mit Charts
     ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Backup, Anzeige)
@@ -149,6 +155,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Änderung |
 |---|---|
+| 4.3.0 | Auto-Bereinigung, Sortier-Optionen, Share-Target, Batch-Operationen, Haptisches Feedback, Guide-Update |
 | 4.2.0 | Version-Bump |
 | 4.1.0 | Content-Type-Filter-Chips, Swipe-Right-to-Pin, Statistik-Screen mit Charts, verschlüsseltes Export/Import-Backup (.cvbk) |
 | 4.0.0 | Erweiterte Content-Type-Erkennung (18 Typen), Smart Actions Bottom Sheet, AMOLED-Modus |

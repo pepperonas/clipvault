@@ -6,6 +6,9 @@ import io.celox.clipvault.data.ClipDatabase
 import io.celox.clipvault.data.ClipRepository
 import io.celox.clipvault.data.DatabaseMigrationHelper
 import io.celox.clipvault.security.KeyStoreManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.sqlcipher.database.SQLiteDatabase
 import java.util.Arrays
 
@@ -36,6 +39,14 @@ class ClipVaultApp : Application() {
         }
 
         openDatabase()
+
+        // Run auto-cleanup if configured
+        val days = keyStoreManager.getAutoCleanupDays()
+        if (days > 0) {
+            CoroutineScope(Dispatchers.IO).launch {
+                repository?.autoCleanup(days)
+            }
+        }
     }
 
     /**
