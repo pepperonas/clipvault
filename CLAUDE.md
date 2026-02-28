@@ -12,10 +12,13 @@ ClipVault is an Android clipboard history manager (Kotlin, Jetpack Compose, Mate
 ./gradlew assembleDebug          # Debug build
 ./gradlew assembleRelease        # Release build (minified + shrunk, signed)
 ./gradlew installDebug           # Install debug APK on connected device
-./gradlew test                   # Run all unit tests
-./gradlew test --tests "io.celox.clipvault.data.ClipRepositoryTest"                    # Single test class
-./gradlew test --tests "io.celox.clipvault.data.ClipRepositoryTest.insert new content returns new id"  # Single test method
+./gradlew test                   # Run all unit tests (debug + release)
+./gradlew testDebugUnitTest      # Run debug unit tests only (faster)
+./gradlew testDebugUnitTest --tests "io.celox.clipvault.util.ContentTypeDetectionTest"  # Single test class
+./gradlew testDebugUnitTest --tests "io.celox.clipvault.util.SmartActionTest.TEXT has only COPY and SHARE"  # Single test method
 ```
+
+**Important**: The `--tests` filter only works on `testDebugUnitTest` or `testReleaseUnitTest`, NOT on the aggregate `test` task.
 
 **Testing stack**: JUnit 4 + Mockito Kotlin + kotlinx-coroutines-test. Tests use `runTest` and backtick-named methods.
 
@@ -47,8 +50,8 @@ Manual dependency wiring — no DI framework. `ClipVaultApp` (Application subcla
 - **Room database** (`clipvault.db`, version 1, single table `clip_entries`)
 - **Always encrypted** with SQLCipher (AES-256). `SupportFactory(passphrase, null, false)` — third arg prevents premature passphrase clearing.
 - **ClipEntry**: `id`, `content`, `timestamp`, `pinned`
-- **ClipDao**: queries return `Flow<List<ClipEntry>>` for reactive UI; `getAllEntriesSnapshot()` (suspend, non-Flow) for export and statistics
-- **ClipRepository**: mutex-serialized insert with duplicate-check, delete cooldown (see below), `exportAll()` + `importEntries()` with dedup by content+timestamp
+- **ClipDao**: queries return `Flow<List<ClipEntry>>` for reactive UI; `getAllEntriesSnapshot()` (suspend, non-Flow) for export and statistics; `deleteOlderThan()` for auto-cleanup; `deleteBatch()` for batch operations
+- **ClipRepository**: mutex-serialized insert with duplicate-check, delete cooldown (see below), `autoCleanup()`, `deleteBatch()`, `exportAll()` + `importEntries()` with dedup by content+timestamp
 - **DatabaseMigrationHelper**: plain-to-encrypted migration (for upgrades from older versions)
 
 ### Delete cooldown mechanism
@@ -67,9 +70,10 @@ Critical for preventing re-insertion of deleted content by the clipboard polling
 
 ### Security layer
 
-- **KeyStoreManager**: Two separate concerns:
+- **KeyStoreManager**: Three concerns:
   1. **DB passphrase**: Auto-generated 64-char, encrypted with AES-256-GCM via Android KeyStore (StrongBox preferred on API 28+). User never sees this.
   2. **App lock**: Optional UI lock with password (user-set or auto-generated) + biometric support. Stored separately from DB passphrase.
+  3. **Preferences**: AMOLED mode, auto-cleanup days — stored in SharedPreferences (not encrypted, non-sensitive).
 - **v3 migration**: On first launch after upgrade, legacy user password is adopted as DB passphrase (no re-encryption needed), and app lock settings are preserved.
 - Passphrase byte arrays are zeroed after use (`Arrays.fill(bytes, 0)`)
 
@@ -81,11 +85,15 @@ Critical for preventing re-insertion of deleted content by the clipboard polling
 
 ### Smart Actions
 
-Long-press on a clip entry opens `SmartActionBottomSheet`. `resolveSmartActions()` maps each `ContentType` to available `SmartActionType` entries (COPY, OPEN_BROWSER, CALL, SEND_SMS, SEND_EMAIL, SHARE, OPEN_MAPS). Copy is always first, Share always last. Actions dispatch via Android intents in `HistoryActivity.handleSmartAction()`.
+Long-press on a clip entry in the favorites accordion opens `SmartActionBottomSheet`. `resolveSmartActions()` maps each `ContentType` to available `SmartActionType` entries (COPY, OPEN_BROWSER, CALL, SEND_SMS, SEND_EMAIL, SHARE, OPEN_MAPS). Copy is always first, Share always last. Actions dispatch via Android intents in `HistoryActivity.handleSmartAction()`. In the main (non-favorites) list, long-press enters batch selection mode instead.
 
 ### Export/Import backup
 
 `BackupCrypto` provides AES-256-GCM encryption with PBKDF2 key derivation (100k iterations, SHA-256). Binary format: `[CVBK magic][version][IV][salt][encrypted JSON]`. Salt and IV are random per export. JSON contains `version`, `exportedAt`, and `entries` array. Import deduplicates by content+timestamp. Settings UI uses SAF (`ACTION_CREATE_DOCUMENT`/`ACTION_OPEN_DOCUMENT`) for file access.
+
+### Auto-cleanup
+
+Configured via Settings > Maintenance. `KeyStoreManager.getAutoCleanupDays()` stores the period (0=disabled, 7/30/90/180/365). On app start, `ClipVaultApp.onCreate()` runs `repository.autoCleanup(days)` on `Dispatchers.IO`. Only unpinned entries older than the cutoff are deleted.
 
 ### UI layer
 
@@ -94,12 +102,16 @@ Multi-activity app with Jetpack Compose screens:
 - **HistoryActivity** — main clipboard history with:
   - `ContentTypeFilterBar`: horizontal `LazyRow` of `FilterChip`s, "All" + per-type chips sorted by count descending. Tap selected chip to deselect.
   - `SwipeableClipContainer`: bidirectional swipe — left=delete (dismisses card), right=pin/unpin (card stays visible, `confirmValueChange` returns `false`). Haptic feedback at 40% threshold.
+  - Sort dropdown (`SortOrder` enum: NEWEST, OLDEST, A_Z, Z_A, LONGEST, SHORTEST) with badge indicator when non-default
+  - Batch selection mode: long-press enters selection, TopAppBar switches to selection actions (select all, pin, delete, close), `SelectableClipEntryCard` with checkboxes, `BackHandler` exits selection
+  - Share target: receives `ACTION_SEND` text/plain intents, inserts via repository
+  - Haptic feedback on copy (tap) and swipe actions
   - Favorites accordion, search, overflow menu (Statistics, Guide, Settings)
 - **StatisticsActivity** — one-shot snapshot via `getAllEntriesSnapshot()` in `LaunchedEffect`, no ViewModel. Canvas-drawn donut chart + bar chart.
-- **SettingsActivity** — app lock, AMOLED toggle, backup export/import with password dialogs
+- **SettingsActivity** — app lock, AMOLED toggle, backup export/import, auto-cleanup with radio dialog, about link
 - **AboutActivity** — app icon, version, author, copyright
 
-`HistoryViewModel` uses `combine(unfilteredEntries, _selectedContentType)` to layer content type filter on top of search. `contentTypeCounts` is derived from unfiltered entries for chip badge counts.
+`HistoryViewModel` uses `combine(unfilteredEntries, _selectedContentType, _sortOrder)` to layer content type filter and sort on top of search. Pinned entries always sort first; `SortOrder` applies only to non-pinned. Batch selection state (`selectionMode`, `selectedIds`) is managed via `MutableStateFlow`. `contentTypeCounts` is derived from unfiltered entries for chip badge counts.
 
 ### Foreground service notification
 
