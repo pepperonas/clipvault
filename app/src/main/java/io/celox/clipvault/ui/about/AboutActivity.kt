@@ -55,8 +55,10 @@ class AboutActivity : FragmentActivity() {
             "?"
         }
 
+        val app = application as io.celox.clipvault.ClipVaultApp
+
         setContent {
-            ClipVaultTheme {
+            ClipVaultTheme(amoledMode = app.keyStoreManager.isAmoledMode()) {
                 AboutScreen(
                     versionName = versionName ?: "?",
                     onBack = { finish() },

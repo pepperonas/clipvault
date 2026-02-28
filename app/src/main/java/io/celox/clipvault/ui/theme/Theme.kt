@@ -22,6 +22,17 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = Color(0xFF2A2A3C),
 )
 
+private val AmoledDarkColors = darkColorScheme(
+    primary = Color(0xFF90CAF9),
+    secondary = Color(0xFFCE93D8),
+    tertiary = Color(0xFF80CBC4),
+    surface = Color(0xFF0A0A0A),
+    background = Color(0xFF000000),
+    onSurface = Color(0xFFE0E0E0),
+    onBackground = Color(0xFFE0E0E0),
+    surfaceVariant = Color(0xFF141414),
+)
+
 private val LightColors = lightColorScheme(
     primary = Color(0xFF1565C0),
     secondary = Color(0xFF7B1FA2),
@@ -35,9 +46,11 @@ private val LightColors = lightColorScheme(
 fun ClipVaultTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoledMode: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
+        amoledMode && darkTheme -> AmoledDarkColors
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context)

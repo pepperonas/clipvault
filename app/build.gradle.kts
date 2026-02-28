@@ -15,8 +15,8 @@ android {
         applicationId = "io.celox.clipvault"
         minSdk = 29
         targetSdk = 35
-        versionCode = 16
-        versionName = "3.11.0"
+        versionCode = 18
+        versionName = "4.1.0"
     }
 
     signingConfigs {

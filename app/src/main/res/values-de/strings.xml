@@ -56,6 +56,24 @@
     <string name="content_type_email">E-Mail</string>
     <string name="content_type_phone">Telefon</string>
     <string name="content_type_text">Text</string>
+    <string name="content_type_json">JSON</string>
+    <string name="content_type_code">Code</string>
+    <string name="content_type_markdown">Markdown</string>
+    <string name="content_type_color">Farbe</string>
+    <string name="content_type_coordinates">Koordinaten</string>
+    <string name="content_type_iban">IBAN</string>
+    <string name="content_type_address">Adresse</string>
+
+    <!-- Smart Actions -->
+    <string name="smart_actions_title">Aktionen</string>
+    <string name="action_copy">Kopieren</string>
+    <string name="action_open_browser">Im Browser \u00f6ffnen</string>
+    <string name="action_call">Anrufen</string>
+    <string name="action_send_sms">SMS senden</string>
+    <string name="action_send_email">E-Mail senden</string>
+    <string name="action_share">Teilen</string>
+    <string name="action_open_maps">In Karten \u00f6ffnen</string>
+    <string name="action_failed">Keine App verf\u00fcgbar</string>
 
     <!-- History - Timestamps -->
     <string name="time_just_now">Gerade eben</string>
@@ -83,7 +101,7 @@
     <string name="guide_setup_title">1. Einrichtung</string>
     <string name="guide_setup_text">Aktiviere den Accessibility Service in den Android-Einstellungen (Bedienungshilfen > ClipVault). Erst dann kann ClipVault Kopier-Aktionen automatisch erkennen und speichern.\n\nBei Installation per APK (nicht \u00fcber Play Store, ab Android 13): \u00d6ffne zuerst die App-Info von ClipVault, tippe auf \u22ee (oben rechts) und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\".</string>
     <string name="guide_copy_title">2. Clips kopieren</string>
-    <string name="guide_copy_text">Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. Langer Druck zeigt den vollst\u00e4ndigen Text an.</string>
+    <string name="guide_copy_text">Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. Langer Druck \u00f6ffnet Smart Actions \u2014 kontextabh\u00e4ngige Aktionen wie URLs \u00f6ffnen, Telefonnummern anrufen oder E-Mails senden. Mit dem kleinen Pfeil kannst du lange Eintr\u00e4ge auf-/zuklappen.</string>
     <string name="guide_favorites_title">3. Favoriten</string>
     <string name="guide_favorites_text">Tippe auf das Stern-Symbol, um einen Clip als Favorit zu markieren. Favoriten erscheinen in einer eigenen aufklappbaren Sektion am Anfang der Liste und werden beim L\u00f6schen aller Clips beibehalten.</string>
     <string name="guide_delete_title">4. L\u00f6schen</string>
@@ -116,6 +134,12 @@
     <string name="biometric_lock_title">Biometrische Sperre</string>
     <string name="biometric_always_active">Immer aktiv (automatisches Passwort)</string>
     <string name="biometric_unlock_subtitle">Fingerabdruck/Gesicht zum Entsperren</string>
+    <!-- Display section -->
+    <string name="section_display">Anzeige</string>
+    <string name="amoled_mode_title">AMOLED-Modus</string>
+    <string name="amoled_mode_enabled">Reines Schwarz (Dark Mode)</string>
+    <string name="amoled_mode_disabled">Standard Dark-Theme</string>
+
     <string name="section_info">Info</string>
     <string name="about_clipvault">\u00dcber ClipVault</string>
     <string name="version_format">Version %s</string>
@@ -143,6 +167,41 @@
     <string name="confirm_new_password_label">Neues Passwort best\u00e4tigen</string>
     <string name="error_enter_current_password">Aktuelles Passwort eingeben</string>
     <string name="change_button">\u00c4ndern</string>
+
+    <!-- Filter Chips -->
+    <string name="filter_all">Alle</string>
+    <string name="filter_entries_count">%d Eintr\u00e4ge</string>
+
+    <!-- Swipe actions -->
+    <string name="action_pinned">Angepinnt</string>
+    <string name="action_unpinned">Losgel\u00f6st</string>
+
+    <!-- Statistics screen -->
+    <string name="statistics_title">Statistiken</string>
+    <string name="stat_total_clips">Clips gesamt</string>
+    <string name="stat_pinned_clips">Angepinnt</string>
+    <string name="stat_avg_length">Durchschn. L\u00e4nge</string>
+    <string name="stat_content_distribution">Inhaltstypen</string>
+    <string name="stat_weekly_activity">Letzte 7 Tage</string>
+    <string name="stat_characters">Zeichen</string>
+    <string name="stat_no_data">Noch keine Daten</string>
+    <string name="stat_top_types">Top-Typen</string>
+    <string name="menu_statistics">Statistiken</string>
+
+    <!-- Backup -->
+    <string name="section_backup">Backup</string>
+    <string name="backup_export">Backup exportieren</string>
+    <string name="backup_export_subtitle">Verschl\u00fcsseltes Backup in Datei</string>
+    <string name="backup_import">Backup importieren</string>
+    <string name="backup_import_subtitle">Aus verschl\u00fcsselter Datei wiederherstellen</string>
+    <string name="backup_password_title">Backup-Passwort</string>
+    <string name="backup_password_hint">Passwort eingeben</string>
+    <string name="backup_password_confirm">Passwort best\u00e4tigen</string>
+    <string name="backup_password_mismatch">Passw\u00f6rter stimmen nicht \u00fcberein</string>
+    <string name="backup_export_success">Backup erfolgreich exportiert</string>
+    <string name="backup_import_success">Import abgeschlossen: %d Eintr\u00e4ge hinzugef\u00fcgt</string>
+    <string name="backup_wrong_password">Falsches Passwort oder besch\u00e4digte Datei</string>
+    <string name="backup_invalid_file">Ung\u00fcltige Backup-Datei</string>
 
     <!-- About screen -->
     <string name="about_title">\u00dcber ClipVault</string>

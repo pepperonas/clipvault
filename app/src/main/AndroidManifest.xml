@@ -41,6 +41,12 @@
             android:exported="false"
             android:theme="@style/Theme.ClipVault" />
 
+        <!-- Statistics -->
+        <activity
+            android:name=".ui.statistics.StatisticsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ClipVault" />
+
         <!-- Foreground Service for persistent notification -->
         <service
             android:name=".service.ClipVaultService"

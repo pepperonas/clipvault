@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.11.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-4.1.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -32,7 +32,13 @@ ClipVault works **completely offline**. The app has the INTERNET permission expl
 - **Optional app lock** -- display manually lockable with fingerprint/face or custom password
 - **Favorites accordion** -- pinned clips in a collapsible section at the top of the list
 - **Swipe-to-delete** with undo -- delete clips with a swipe gesture (40% threshold to prevent accidental deletion), with undo option
-- **Content type icons** -- automatic detection of social media links (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub), URLs, emails, phone numbers
+- **Swipe-to-pin** -- swipe right to pin/unpin clips with visual feedback (gold = pin, gray = unpin)
+- **Content type detection** -- 18 types (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub, JSON, Color Hex, Coordinates, IBAN, Markdown, Code, Address, URL, Email, Phone, Text)
+- **Content type filter chips** -- horizontally scrollable chip bar to filter by detected type with count badges
+- **Smart Actions** -- long-press for context-aware actions (open URL, call, email, share, maps)
+- **Statistics screen** -- summary cards, content type donut chart, weekly activity bar chart
+- **Export/Import backup** -- AES-256-GCM encrypted backups with PBKDF2 key derivation, password-protected `.cvbk` files
+- **AMOLED mode** -- true black background for OLED displays
 - **Built-in guide** -- help dialog directly in the app
 - **Search** and clip management
 - **Material You** (dynamic colors from Android 12) with dark/light support
@@ -92,12 +98,19 @@ io.celox.clipvault/
 ├── service/
 │   ├── ClipAccessibilityService.kt  # Clipboard capture (3 strategies)
 │   └── ClipVaultService.kt          # Foreground Service
+├── util/
+│   ├── ContentType.kt               # 18 content type enum (icon, color, label)
+│   ├── ContentTypeDetector.kt       # Content type detection logic
+│   ├── SmartAction.kt               # Smart action definitions
+│   └── BackupCrypto.kt              # AES-256-GCM backup encryption
 └── ui/
-    ├── theme/Theme.kt               # Material 3 Theme
+    ├── theme/Theme.kt               # Material 3 Theme (+ AMOLED mode)
     ├── history/
-    │   ├── HistoryActivity.kt       # Main screen
-    │   └── HistoryViewModel.kt      # ViewModel
-    ├── settings/SettingsActivity.kt  # Settings (app lock, info)
+    │   ├── HistoryActivity.kt       # Main screen (filter chips, swipe actions)
+    │   ├── HistoryViewModel.kt      # ViewModel (content type filtering)
+    │   └── SmartActionBottomSheet.kt # Context-aware action sheet
+    ├── statistics/StatisticsActivity.kt # Statistics with charts
+    ├── settings/SettingsActivity.kt  # Settings (app lock, backup, display)
     └── about/AboutActivity.kt       # About the app
 ```
 
@@ -136,6 +149,8 @@ This project uses [Semantic Versioning](https://semver.org/):
 
 | Version | Change |
 |---|---|
+| 4.1.0 | Content type filter chips, swipe-right-to-pin, statistics screen with charts, encrypted export/import backup (.cvbk) |
+| 4.0.0 | Extended content type detection (18 types), Smart Actions bottom sheet, AMOLED mode |
 | 3.11.0 | Fix: notification now truly minimal — new channel ID + deferred foreground behavior to avoid cached high-importance channel |
 | 3.10.0 | Version bump (notification priority confirmed at IMPORTANCE_MIN / PRIORITY_MIN) |
 | 3.9.0 | Notification priority reduced to minimum (IMPORTANCE_MIN / PRIORITY_MIN) for least intrusive presence |

@@ -59,6 +59,24 @@
     <string name="content_type_email">Email</string>
     <string name="content_type_phone">Phone</string>
     <string name="content_type_text">Text</string>
+    <string name="content_type_json">JSON</string>
+    <string name="content_type_code">Code</string>
+    <string name="content_type_markdown">Markdown</string>
+    <string name="content_type_color">Color</string>
+    <string name="content_type_coordinates">Coordinates</string>
+    <string name="content_type_iban">IBAN</string>
+    <string name="content_type_address">Address</string>
+
+    <!-- Smart Actions -->
+    <string name="smart_actions_title">Actions</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_open_browser">Open in browser</string>
+    <string name="action_call">Call</string>
+    <string name="action_send_sms">Send SMS</string>
+    <string name="action_send_email">Send email</string>
+    <string name="action_share">Share</string>
+    <string name="action_open_maps">Open in Maps</string>
+    <string name="action_failed">No app available</string>
 
     <!-- History - Timestamps -->
     <string name="time_just_now">Just now</string>
@@ -86,7 +104,7 @@
     <string name="guide_setup_title">1. Setup</string>
     <string name="guide_setup_text">Enable the Accessibility Service in Android Settings (Accessibility > ClipVault). Only then can ClipVault automatically detect and save copy actions.\n\nWhen installed via APK (not from Play Store, Android 13+): First open ClipVault\'s app info, tap \u22ee (top right) and select \"Allow restricted settings\".</string>
     <string name="guide_copy_title">2. Copy clips</string>
-    <string name="guide_copy_text">Tap an entry to copy it to the clipboard. Long press to show the full text.</string>
+    <string name="guide_copy_text">Tap an entry to copy it to the clipboard. Long press to open Smart Actions \u2014 context-aware actions like opening URLs, calling phone numbers, or sending emails. Use the small arrow to expand/collapse long entries.</string>
     <string name="guide_favorites_title">3. Favorites</string>
     <string name="guide_favorites_text">Tap the star icon to mark a clip as a favorite. Favorites appear in a collapsible section at the top of the list and are preserved when deleting all clips.</string>
     <string name="guide_delete_title">4. Delete</string>
@@ -119,6 +137,12 @@
     <string name="biometric_lock_title">Biometric lock</string>
     <string name="biometric_always_active">Always active (auto-generated password)</string>
     <string name="biometric_unlock_subtitle">Fingerprint/face to unlock</string>
+    <!-- Display section -->
+    <string name="section_display">Display</string>
+    <string name="amoled_mode_title">AMOLED mode</string>
+    <string name="amoled_mode_enabled">True black background (dark mode)</string>
+    <string name="amoled_mode_disabled">Standard dark theme</string>
+
     <string name="section_info">Info</string>
     <string name="about_clipvault">About ClipVault</string>
     <string name="version_format">Version %s</string>
@@ -146,6 +170,41 @@
     <string name="confirm_new_password_label">Confirm new password</string>
     <string name="error_enter_current_password">Enter current password</string>
     <string name="change_button">Change</string>
+
+    <!-- Filter Chips -->
+    <string name="filter_all">All</string>
+    <string name="filter_entries_count">%d entries</string>
+
+    <!-- Swipe actions -->
+    <string name="action_pinned">Pinned</string>
+    <string name="action_unpinned">Unpinned</string>
+
+    <!-- Statistics screen -->
+    <string name="statistics_title">Statistics</string>
+    <string name="stat_total_clips">Total clips</string>
+    <string name="stat_pinned_clips">Pinned</string>
+    <string name="stat_avg_length">Avg. length</string>
+    <string name="stat_content_distribution">Content types</string>
+    <string name="stat_weekly_activity">Last 7 days</string>
+    <string name="stat_characters">characters</string>
+    <string name="stat_no_data">No data yet</string>
+    <string name="stat_top_types">Top types</string>
+    <string name="menu_statistics">Statistics</string>
+
+    <!-- Backup -->
+    <string name="section_backup">Backup</string>
+    <string name="backup_export">Export backup</string>
+    <string name="backup_export_subtitle">Encrypted backup to file</string>
+    <string name="backup_import">Import backup</string>
+    <string name="backup_import_subtitle">Restore from encrypted file</string>
+    <string name="backup_password_title">Backup password</string>
+    <string name="backup_password_hint">Enter password</string>
+    <string name="backup_password_confirm">Confirm password</string>
+    <string name="backup_password_mismatch">Passwords do not match</string>
+    <string name="backup_export_success">Backup exported successfully</string>
+    <string name="backup_import_success">Import complete: %d entries added</string>
+    <string name="backup_wrong_password">Wrong password or corrupt file</string>
+    <string name="backup_invalid_file">Invalid backup file</string>
 
     <!-- About screen -->
     <string name="about_title">About ClipVault</string>

@@ -37,4 +37,10 @@ interface ClipDao {
 
     @Query("SELECT COUNT(*) FROM clip_entries")
     suspend fun getCount(): Int
+
+    @Query("SELECT * FROM clip_entries ORDER BY timestamp DESC")
+    suspend fun getAllEntriesSnapshot(): List<ClipEntry>
+
+    @Query("SELECT * FROM clip_entries WHERE content = :content AND timestamp = :timestamp LIMIT 1")
+    suspend fun findByContentAndTimestamp(content: String, timestamp: Long): ClipEntry?
 }

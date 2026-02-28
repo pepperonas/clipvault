@@ -75,4 +75,20 @@ class ClipRepository(
     suspend fun deleteAllUnpinned() {
         dao.deleteAllUnpinned()
     }
+
+    suspend fun getAllEntriesSnapshot(): List<ClipEntry> = dao.getAllEntriesSnapshot()
+
+    suspend fun exportAll(): List<ClipEntry> = dao.getAllEntriesSnapshot()
+
+    suspend fun importEntries(entries: List<ClipEntry>): Int {
+        var imported = 0
+        for (entry in entries) {
+            val existing = dao.findByContentAndTimestamp(entry.content, entry.timestamp)
+            if (existing == null) {
+                dao.insert(ClipEntry(content = entry.content, timestamp = entry.timestamp, pinned = entry.pinned))
+                imported++
+            }
+        }
+        return imported
+    }
 }

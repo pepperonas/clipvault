@@ -28,6 +28,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -40,36 +41,38 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AlternateEmail
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -101,7 +104,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -119,9 +121,11 @@ import io.celox.clipvault.R
 import io.celox.clipvault.ClipVaultApp
 import io.celox.clipvault.data.ClipEntry
 import io.celox.clipvault.service.ClipAccessibilityService
-import io.celox.clipvault.util.ContentTypeLabel
-import io.celox.clipvault.util.detectContentTypeLabel
+import io.celox.clipvault.util.ContentType
+import io.celox.clipvault.util.SmartActionType
+import io.celox.clipvault.util.detectContentType
 import io.celox.clipvault.ui.settings.SettingsActivity
+import io.celox.clipvault.ui.statistics.StatisticsActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -157,7 +161,7 @@ class HistoryActivity : FragmentActivity() {
         requestNotificationPermission()
 
         setContent {
-            ClipVaultTheme {
+            ClipVaultTheme(amoledMode = app.keyStoreManager.isAmoledMode()) {
                 val isUnlocked = viewModel?.isUnlocked?.collectAsState()?.value ?: !app.isAppLockEnabled
                 val appLockEnabled = app.isAppLockEnabled
                 HistoryScreen(
@@ -168,10 +172,14 @@ class HistoryActivity : FragmentActivity() {
                     onOpenAccessibilitySettings = { openAccessibilitySettings() },
                     onOpenAppDetailSettings = { openAppDetailSettings() },
                     onCopyToClipboard = { text -> copyToClipboard(text) },
+                    onSmartAction = { type, content -> handleSmartAction(type, content) },
                     onLock = { viewModel?.lock() },
                     onRequestUnlock = { requestUnlock() },
                     onOpenSettings = {
                         startActivity(Intent(this, SettingsActivity::class.java))
+                    },
+                    onOpenStatistics = {
+                        startActivity(Intent(this, StatisticsActivity::class.java))
                     },
                     showPasswordFallback = showPasswordFallback.value,
                     onPasswordFallbackDismiss = { showPasswordFallback.value = false },
@@ -330,6 +338,60 @@ class HistoryActivity : FragmentActivity() {
         }
     }
 
+    private fun handleSmartAction(actionType: SmartActionType, content: String) {
+        when (actionType) {
+            SmartActionType.COPY -> copyToClipboard(content)
+            SmartActionType.OPEN_BROWSER -> {
+                try {
+                    val url = if (content.trim().startsWith("http")) content.trim()
+                    else "https://${content.trim()}"
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                } catch (_: Exception) {
+                    showBriefToast(getString(R.string.action_failed))
+                }
+            }
+            SmartActionType.CALL -> {
+                try {
+                    startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${content.trim()}")))
+                } catch (_: Exception) {
+                    showBriefToast(getString(R.string.action_failed))
+                }
+            }
+            SmartActionType.SEND_SMS -> {
+                try {
+                    startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${content.trim()}")))
+                } catch (_: Exception) {
+                    showBriefToast(getString(R.string.action_failed))
+                }
+            }
+            SmartActionType.SEND_EMAIL -> {
+                try {
+                    startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${content.trim()}")))
+                } catch (_: Exception) {
+                    showBriefToast(getString(R.string.action_failed))
+                }
+            }
+            SmartActionType.SHARE -> {
+                try {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, content)
+                    }
+                    startActivity(Intent.createChooser(shareIntent, null))
+                } catch (_: Exception) {
+                    showBriefToast(getString(R.string.action_failed))
+                }
+            }
+            SmartActionType.OPEN_MAPS -> {
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=${Uri.encode(content.trim())}")))
+                } catch (_: Exception) {
+                    showBriefToast(getString(R.string.action_failed))
+                }
+            }
+        }
+    }
+
     private fun copyToClipboard(text: String) {
         try {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -359,9 +421,11 @@ fun HistoryScreen(
     onOpenAccessibilitySettings: () -> Unit,
     onOpenAppDetailSettings: () -> Unit,
     onCopyToClipboard: (String) -> Unit,
+    onSmartAction: (SmartActionType, String) -> Unit,
     onLock: () -> Unit,
     onRequestUnlock: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenStatistics: () -> Unit,
     showPasswordFallback: Boolean,
     onPasswordFallbackDismiss: () -> Unit,
     onPasswordFallbackSubmit: (String) -> Unit
@@ -370,13 +434,21 @@ fun HistoryScreen(
         ?: remember { mutableStateOf(emptyList()) })
     val searchQuery by (viewModel?.searchQuery?.collectAsState()
         ?: remember { mutableStateOf("") })
+    val selectedContentType by (viewModel?.selectedContentType?.collectAsState()
+        ?: remember { mutableStateOf(null) })
+    val contentTypeCounts by (viewModel?.contentTypeCounts?.collectAsState()
+        ?: remember { mutableStateOf(emptyMap()) })
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var showGuide by remember { mutableStateOf(false) }
+    var selectedEntry by remember { mutableStateOf<ClipEntry?>(null) }
+    var showOverflowMenu by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val deletedMsg = stringResource(R.string.entry_deleted)
     val undoLabel = stringResource(R.string.undo)
+    val pinnedMsg = stringResource(R.string.action_pinned)
+    val unpinnedMsg = stringResource(R.string.action_unpinned)
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
@@ -419,11 +491,36 @@ fun HistoryScreen(
                             Icon(Icons.Default.LockOpen, contentDescription = stringResource(R.string.unlock))
                         }
                     }
-                    IconButton(onClick = { showGuide = true }) {
-                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = stringResource(R.string.guide))
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
+                    Box {
+                        IconButton(onClick = { showOverflowMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = null)
+                        }
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.menu_statistics)) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    onOpenStatistics()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.guide)) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showGuide = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.settings)) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    onOpenSettings()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -460,6 +557,15 @@ fun HistoryScreen(
                         leadingIcon = {
                             Icon(Icons.Default.Search, contentDescription = null)
                         }
+                    )
+                }
+
+                // Content Type Filter Chips
+                if (contentTypeCounts.isNotEmpty()) {
+                    ContentTypeFilterBar(
+                        counts = contentTypeCounts,
+                        selectedType = selectedContentType,
+                        onSelectType = { viewModel?.setContentTypeFilter(it) }
                     )
                 }
             }
@@ -565,7 +671,8 @@ fun HistoryScreen(
 
                         if (favoritesExpanded) {
                             items(items = favorites, key = { it.id }) { entry ->
-                                SwipeToDeleteContainer(
+                                SwipeableClipContainer(
+                                    entry = entry,
                                     onDelete = {
                                         viewModel?.delete(entry)
                                         scope.launch {
@@ -578,11 +685,21 @@ fun HistoryScreen(
                                                 viewModel?.reInsert(entry)
                                             }
                                         }
+                                    },
+                                    onTogglePin = {
+                                        viewModel?.togglePin(entry)
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = if (entry.pinned) unpinnedMsg else pinnedMsg,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
                                     }
                                 ) {
                                     ClipEntryCard(
                                         entry = entry,
                                         onCopy = { onCopyToClipboard(entry.content) },
+                                        onLongPress = { selectedEntry = entry },
                                         onToggleFavorite = { viewModel?.togglePin(entry) }
                                     )
                                 }
@@ -592,7 +709,8 @@ fun HistoryScreen(
 
                     // Regular entries
                     items(items = nonFavorites, key = { it.id }) { entry ->
-                        SwipeToDeleteContainer(
+                        SwipeableClipContainer(
+                            entry = entry,
                             onDelete = {
                                 viewModel?.delete(entry)
                                 scope.launch {
@@ -605,11 +723,21 @@ fun HistoryScreen(
                                         viewModel?.reInsert(entry)
                                     }
                                 }
+                            },
+                            onTogglePin = {
+                                viewModel?.togglePin(entry)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = if (entry.pinned) unpinnedMsg else pinnedMsg,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
                             }
                         ) {
                             ClipEntryCard(
                                 entry = entry,
                                 onCopy = { onCopyToClipboard(entry.content) },
+                                onLongPress = { selectedEntry = entry },
                                 onToggleFavorite = { viewModel?.togglePin(entry) }
                             )
                         }
@@ -661,6 +789,83 @@ fun HistoryScreen(
 
     if (showGuide) {
         GuideDialog(onDismiss = { showGuide = false })
+    }
+
+    selectedEntry?.let { entry ->
+        SmartActionBottomSheet(
+            entry = entry,
+            onDismiss = { selectedEntry = null },
+            onAction = onSmartAction
+        )
+    }
+}
+
+// --- Content Type Filter Bar ---
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContentTypeFilterBar(
+    counts: Map<ContentType, Int>,
+    selectedType: ContentType?,
+    onSelectType: (ContentType?) -> Unit
+) {
+    val sortedTypes = remember(counts) {
+        counts.entries
+            .filter { it.value > 0 }
+            .sortedByDescending { it.value }
+            .map { it.key }
+    }
+    val totalCount = remember(counts) { counts.values.sum() }
+
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp)
+    ) {
+        // "All" chip
+        item(key = "all") {
+            FilterChip(
+                selected = selectedType == null,
+                onClick = { onSelectType(null) },
+                label = {
+                    Text(
+                        stringResource(R.string.filter_all) + " ($totalCount)",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            )
+        }
+
+        items(items = sortedTypes, key = { it.name }) { type ->
+            val count = counts[type] ?: 0
+            FilterChip(
+                selected = selectedType == type,
+                onClick = {
+                    onSelectType(if (selectedType == type) null else type)
+                },
+                label = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = type.icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = if (selectedType == type) MaterialTheme.colorScheme.onSecondaryContainer else type.color
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            stringResource(type.labelRes) + " ($count)",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = type.color.copy(alpha = 0.2f),
+                    selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
     }
 }
 
@@ -928,38 +1133,6 @@ fun SetupBanner(
     }
 }
 
-// --- Content Type Detection ---
-
-private enum class ContentType(val icon: ImageVector, val color: Color, val labelRes: Int) {
-    INSTAGRAM(Icons.Default.Link, Color(0xFFE1306C), R.string.content_type_instagram),
-    FACEBOOK(Icons.Default.Link, Color(0xFF1877F2), R.string.content_type_facebook),
-    YOUTUBE(Icons.Default.PlayCircle, Color(0xFFFF0000), R.string.content_type_youtube),
-    TWITTER(Icons.Default.Link, Color(0xFF000000), R.string.content_type_twitter),
-    TIKTOK(Icons.Default.Link, Color(0xFF010101), R.string.content_type_tiktok),
-    LINKEDIN(Icons.Default.Link, Color(0xFF0A66C2), R.string.content_type_linkedin),
-    GITHUB(Icons.Default.Code, Color(0xFF333333), R.string.content_type_github),
-    URL(Icons.Default.Link, Color(0xFF666666), R.string.content_type_url),
-    EMAIL(Icons.Default.AlternateEmail, Color(0xFF4285F4), R.string.content_type_email),
-    PHONE(Icons.Default.Phone, Color(0xFF34A853), R.string.content_type_phone),
-    TEXT(Icons.AutoMirrored.Filled.Notes, Color(0xFF999999), R.string.content_type_text)
-}
-
-private fun detectContentType(content: String): ContentType {
-    return when (detectContentTypeLabel(content)) {
-        ContentTypeLabel.INSTAGRAM -> ContentType.INSTAGRAM
-        ContentTypeLabel.FACEBOOK -> ContentType.FACEBOOK
-        ContentTypeLabel.YOUTUBE -> ContentType.YOUTUBE
-        ContentTypeLabel.TWITTER -> ContentType.TWITTER
-        ContentTypeLabel.TIKTOK -> ContentType.TIKTOK
-        ContentTypeLabel.LINKEDIN -> ContentType.LINKEDIN
-        ContentTypeLabel.GITHUB -> ContentType.GITHUB
-        ContentTypeLabel.URL -> ContentType.URL
-        ContentTypeLabel.EMAIL -> ContentType.EMAIL
-        ContentTypeLabel.PHONE -> ContentType.PHONE
-        ContentTypeLabel.TEXT -> ContentType.TEXT
-    }
-}
-
 @Composable
 private fun ContentTypeIcon(contentType: ContentType, modifier: Modifier = Modifier) {
     Icon(
@@ -977,10 +1150,12 @@ private fun ContentTypeIcon(contentType: ContentType, modifier: Modifier = Modif
 fun ClipEntryCard(
     entry: ClipEntry,
     onCopy: () -> Unit,
+    onLongPress: () -> Unit,
     onToggleFavorite: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val contentType = remember(entry.content) { detectContentType(entry.content) }
+    val haptic = LocalHapticFeedback.current
 
     Row(
         modifier = Modifier
@@ -994,7 +1169,10 @@ fun ClipEntryCard(
             .animateContentSize()
             .combinedClickable(
                 onClick = onCopy,
-                onLongClick = { expanded = !expanded }
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongPress()
+                }
             )
             .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -1018,6 +1196,18 @@ fun ClipEntryCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+        val chevronRotation by animateFloatAsState(
+            targetValue = if (expanded) 180f else 0f,
+            label = "expand_chevron"
+        )
+        IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(32.dp)) {
+            Icon(
+                Icons.Default.KeyboardArrowDown,
+                contentDescription = if (expanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
+                modifier = Modifier.size(18.dp).rotate(chevronRotation),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+        }
         IconButton(onClick = onToggleFavorite, modifier = Modifier.size(40.dp)) {
             Icon(
                 if (entry.pinned) Icons.Filled.Star else Icons.Outlined.Star,
@@ -1032,30 +1222,40 @@ fun ClipEntryCard(
     }
 }
 
-// --- Swipe to Delete Container ---
+// --- Swipeable Clip Container (Delete left, Pin right) ---
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SwipeToDeleteContainer(
+fun SwipeableClipContainer(
+    entry: ClipEntry,
     onDelete: () -> Unit,
+    onTogglePin: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     var isDeleted by remember { mutableStateOf(false) }
 
     val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            if (it == SwipeToDismissBoxValue.EndToStart && !isDeleted) {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                isDeleted = true
-                true
-            } else false
+        confirmValueChange = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.EndToStart -> {
+                    if (!isDeleted) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        isDeleted = true
+                        true
+                    } else false
+                }
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onTogglePin()
+                    false // Don't dismiss — card stays visible
+                }
+                else -> false
+            }
         },
         positionalThreshold = { it * 0.4f }
     )
 
-    // Trigger deletion when isDeleted is set — runs after recomposition,
-    // independent of animation state (fixes last-entry bug)
     LaunchedEffect(isDeleted) {
         if (isDeleted) {
             onDelete()
@@ -1065,33 +1265,48 @@ fun SwipeToDeleteContainer(
     if (!isDeleted) {
         SwipeToDismissBox(
             state = dismissState,
-            enableDismissFromStartToEnd = false,
+            enableDismissFromStartToEnd = true,
             enableDismissFromEndToStart = true,
             backgroundContent = {
-                val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
-                val bgAlpha by animateFloatAsState(
-                    targetValue = if (isSwiping) 1f else 0f,
-                    animationSpec = tween(if (isSwiping) 100 else 300),
-                    label = "swipe_bg"
-                )
+                val direction = dismissState.dismissDirection
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 12.dp, vertical = 2.dp)
                         .background(
-                            MaterialTheme.colorScheme.error.copy(alpha = bgAlpha),
+                            when (direction) {
+                                SwipeToDismissBoxValue.StartToEnd -> {
+                                    if (entry.pinned) Color(0xFF9E9E9E) else Color(0xFFFFB300)
+                                }
+                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
+                                else -> Color.Transparent
+                            },
                             RoundedCornerShape(12.dp)
                         )
                         .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.CenterEnd
+                    contentAlignment = when (direction) {
+                        SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                        else -> Alignment.CenterEnd
+                    }
                 ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.delete_button),
-                        modifier = Modifier.graphicsLayer { alpha = bgAlpha },
-                        tint = MaterialTheme.colorScheme.onError
-                    )
+                    when (direction) {
+                        SwipeToDismissBoxValue.StartToEnd -> {
+                            Icon(
+                                if (entry.pinned) Icons.Outlined.PushPin else Icons.Filled.PushPin,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                        SwipeToDismissBoxValue.EndToStart -> {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.delete_button),
+                                tint = MaterialTheme.colorScheme.onError
+                            )
+                        }
+                        else -> {}
+                    }
                 }
             }
         ) {

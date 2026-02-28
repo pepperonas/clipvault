@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.11.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-4.1.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -32,7 +32,13 @@ ClipVault funktioniert **vollständig offline**. Die App hat die INTERNET-Permis
 - **Optionale App-Sperre** — Anzeige manuell sperrbar mit Fingerprint/Gesicht oder eigenem Passwort
 - **Favoriten-Accordion** — Favorisierte Clips in aufklappbarer Sektion am Listenkopf
 - **Swipe-to-Delete** mit Undo — Clips per Wisch-Geste löschen (40%-Schwelle gegen versehentliches Löschen), mit Rückgängig-Option
-- **Content-Type-Icons** — Automatische Erkennung von Social-Media-Links (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub), URLs, E-Mails, Telefonnummern
+- **Swipe-to-Pin** — nach rechts wischen zum Pinnen/Entpinnen mit visuellem Feedback (Gold = Pin, Grau = Entpinnen)
+- **Content-Type-Erkennung** — 18 Typen (Instagram, Facebook, YouTube, X, TikTok, LinkedIn, GitHub, JSON, Farb-Hex, Koordinaten, IBAN, Markdown, Code, Adresse, URL, E-Mail, Telefon, Text)
+- **Content-Type-Filter-Chips** — horizontal scrollbare Chip-Leiste zum Filtern nach erkanntem Typ mit Anzahl-Badges
+- **Smart Actions** — langer Druck für kontextabhängige Aktionen (URL öffnen, Anrufen, E-Mail, Teilen, Karten)
+- **Statistik-Screen** — Zusammenfassungskarten, Inhaltstyp-Donut-Chart, Wochen-Aktivitäts-Balkendiagramm
+- **Export/Import-Backup** — AES-256-GCM verschlüsselte Backups mit PBKDF2-Schlüsselableitung, passwortgeschützte `.cvbk`-Dateien
+- **AMOLED-Modus** — reines Schwarz für OLED-Displays
 - **Integrierte Anleitung** — Hilfe-Dialog direkt in der App
 - **Suche** und Clip-Verwaltung
 - **Material You** (dynamische Farben ab Android 12) mit Dark/Light-Support
@@ -92,12 +98,19 @@ io.celox.clipvault/
 ├── service/
 │   ├── ClipAccessibilityService.kt  # Clipboard-Capture (3 Strategien)
 │   └── ClipVaultService.kt          # Foreground Service
+├── util/
+│   ├── ContentType.kt               # 18 Content-Type-Enum (Icon, Farbe, Label)
+│   ├── ContentTypeDetector.kt       # Content-Type-Erkennungslogik
+│   ├── SmartAction.kt               # Smart-Action-Definitionen
+│   └── BackupCrypto.kt              # AES-256-GCM Backup-Verschlüsselung
 └── ui/
-    ├── theme/Theme.kt               # Material 3 Theme
+    ├── theme/Theme.kt               # Material 3 Theme (+ AMOLED-Modus)
     ├── history/
-    │   ├── HistoryActivity.kt       # Hauptscreen
-    │   └── HistoryViewModel.kt      # ViewModel
-    ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Info)
+    │   ├── HistoryActivity.kt       # Hauptscreen (Filter-Chips, Swipe-Aktionen)
+    │   ├── HistoryViewModel.kt      # ViewModel (Content-Type-Filterung)
+    │   └── SmartActionBottomSheet.kt # Kontextabhängige Aktionen
+    ├── statistics/StatisticsActivity.kt # Statistiken mit Charts
+    ├── settings/SettingsActivity.kt  # Einstellungen (App-Sperre, Backup, Anzeige)
     └── about/AboutActivity.kt       # Über die App
 ```
 
@@ -136,6 +149,8 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Änderung |
 |---|---|
+| 4.1.0 | Content-Type-Filter-Chips, Swipe-Right-to-Pin, Statistik-Screen mit Charts, verschlüsseltes Export/Import-Backup (.cvbk) |
+| 4.0.0 | Erweiterte Content-Type-Erkennung (18 Typen), Smart Actions Bottom Sheet, AMOLED-Modus |
 | 3.11.0 | Fix: Benachrichtigung jetzt wirklich minimal — neuer Channel-ID + deferred Foreground-Verhalten, um gecachten High-Importance-Channel zu umgehen |
 | 3.10.0 | Version-Bump (Benachrichtigungspriorität bestätigt auf IMPORTANCE_MIN / PRIORITY_MIN) |
 | 3.9.0 | Benachrichtigungspriorität auf Minimum reduziert (IMPORTANCE_MIN / PRIORITY_MIN) für minimale Störung |

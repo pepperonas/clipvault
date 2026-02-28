@@ -5,11 +5,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.celox.clipvault.data.ClipEntry
 import io.celox.clipvault.data.ClipRepository
+import io.celox.clipvault.util.ContentType
+import io.celox.clipvault.util.detectContentType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -21,13 +25,35 @@ class HistoryViewModel(private val repository: ClipRepository) : ViewModel() {
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked: StateFlow<Boolean> = _isUnlocked
 
+    private val _selectedContentType = MutableStateFlow<ContentType?>(null)
+    val selectedContentType: StateFlow<ContentType?> = _selectedContentType
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entries: StateFlow<List<ClipEntry>> = _searchQuery
+    private val unfilteredEntries: StateFlow<List<ClipEntry>> = _searchQuery
         .flatMapLatest { query ->
             if (query.isBlank()) repository.allEntries
             else repository.search(query)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val entries: StateFlow<List<ClipEntry>> = combine(
+        unfilteredEntries,
+        _selectedContentType
+    ) { entries, type ->
+        if (type == null) entries
+        else entries.filter { detectContentType(it.content) == type }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val contentTypeCounts: StateFlow<Map<ContentType, Int>> = unfilteredEntries
+        .map { entries ->
+            entries.groupBy { detectContentType(it.content) }
+                .mapValues { it.value.size }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    fun setContentTypeFilter(type: ContentType?) {
+        _selectedContentType.value = type
+    }
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query

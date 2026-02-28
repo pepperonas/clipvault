@@ -31,6 +31,9 @@ class KeyStoreManager(context: Context) {
         private const val KEY_APP_LOCK_BIOMETRIC = "app_lock_biometric"
         private const val KEY_APP_LOCK_PW_GENERATED = "app_lock_pw_generated"
 
+        // Display preferences
+        private const val KEY_AMOLED_MODE = "amoled_mode"
+
         // Legacy keys (v1/v2 migration — read-only, then cleared)
         private const val KEY_LEGACY_PASSWORD = "encrypted_passphrase"
         private const val KEY_LEGACY_IV = "passphrase_iv"
@@ -60,6 +63,14 @@ class KeyStoreManager(context: Context) {
 
     fun setDbPassphrase(passphrase: String) {
         storeEncrypted(passphrase, KEY_DB_PASSPHRASE, KEY_DB_PASSPHRASE_IV)
+    }
+
+    // --- Display preferences ---
+
+    fun isAmoledMode(): Boolean = prefs.getBoolean(KEY_AMOLED_MODE, false)
+
+    fun setAmoledMode(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AMOLED_MODE, enabled).apply()
     }
 
     // --- App Lock (optional UI lock) ---
