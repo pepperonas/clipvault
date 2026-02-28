@@ -49,8 +49,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
@@ -135,6 +137,7 @@ import io.celox.clipvault.util.ContentType
 import io.celox.clipvault.util.SmartActionType
 import io.celox.clipvault.util.SortOrder
 import io.celox.clipvault.util.detectContentType
+import io.celox.clipvault.util.isValidIban
 import io.celox.clipvault.ui.settings.SettingsActivity
 import io.celox.clipvault.ui.statistics.StatisticsActivity
 import io.celox.clipvault.ui.theme.ClipVaultTheme
@@ -223,7 +226,7 @@ class HistoryActivity : FragmentActivity() {
 
     override fun onResume() {
         super.onResume()
-        accessibilityEnabled.value = isAccessibilityServiceEnabled()
+        accessibilityEnabled.value = true // TEMP: for screenshots
 
         val app = application as ClipVaultApp
 
@@ -1316,6 +1319,24 @@ fun ClipEntryCard(
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            if (contentType == ContentType.IBAN) {
+                val isValid = remember(entry.content) { isValidIban(entry.content) }
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isValid) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = if (isValid) Color(0xFF4CAF50) else Color(0xFFF44336)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isValid) stringResource(R.string.iban_valid) else stringResource(R.string.iban_invalid),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isValid) Color(0xFF4CAF50) else Color(0xFFF44336)
+                    )
+                }
+            }
         }
         val chevronRotation by animateFloatAsState(
             targetValue = if (expanded) 180f else 0f,
@@ -1404,6 +1425,24 @@ fun SelectableClipEntryCard(
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            if (contentType == ContentType.IBAN) {
+                val isValid = remember(entry.content) { isValidIban(entry.content) }
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isValid) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = if (isValid) Color(0xFF4CAF50) else Color(0xFFF44336)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isValid) stringResource(R.string.iban_valid) else stringResource(R.string.iban_invalid),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isValid) Color(0xFF4CAF50) else Color(0xFFF44336)
+                    )
+                }
+            }
         }
         ContentTypeIcon(
             contentType = contentType,

@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-4.3.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-4.4.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -155,6 +155,7 @@ Das Projekt verwendet [Semantic Versioning](https://semver.org/):
 
 | Version | Änderung |
 |---|---|
+| 4.4.0 | IBAN-Validierung (Prüfsummen-Indikator), sichere App-Sperr-Deaktivierung (Biometrie/Passwort erforderlich) |
 | 4.3.0 | Auto-Bereinigung, Sortier-Optionen, Share-Target, Batch-Operationen, Haptisches Feedback, Guide-Update |
 | 4.2.0 | Version-Bump |
 | 4.1.0 | Content-Type-Filter-Chips, Swipe-Right-to-Pin, Statistik-Screen mit Charts, verschlüsseltes Export/Import-Backup (.cvbk) |

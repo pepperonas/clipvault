@@ -69,3 +69,16 @@ private fun isIban(text: String): Boolean {
     val cleaned = text.uppercase().replace(" ", "")
     return cleaned.length in 15..34 && IBAN_PATTERN.matches(cleaned)
 }
+
+fun isValidIban(iban: String): Boolean {
+    val cleaned = iban.uppercase().replace(" ", "")
+    if (cleaned.length !in 15..34 || !IBAN_PATTERN.matches(cleaned)) return false
+    // Move first 4 chars to end, replace letters with numbers (A=10..Z=35), check mod 97 == 1
+    val rearranged = cleaned.substring(4) + cleaned.substring(0, 4)
+    var remainder = 0
+    for (c in rearranged) {
+        val value = if (c.isLetter()) (c - 'A' + 10) else (c - '0')
+        remainder = if (value >= 10) (remainder * 100 + value) % 97 else (remainder * 10 + value) % 97
+    }
+    return remainder == 1
+}

@@ -1,6 +1,7 @@
 package io.celox.clipvault.util
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -231,5 +232,35 @@ class ContentTypeDetectionTest {
     fun `JSON-like text that is not JSON returns TEXT`() {
         assertEquals(ContentType.TEXT, detectContentType("I said {hello} to you"))
         assertEquals(ContentType.TEXT, detectContentType("{no quotes here}"))
+    }
+
+    // --- IBAN validation tests ---
+
+    @Test
+    fun `validates correct IBANs`() {
+        assertTrue(isValidIban("DE89370400440532013000"))
+        assertTrue(isValidIban("DE89 3704 0044 0532 0130 00"))
+        assertTrue(isValidIban("GB29NWBK60161331926819"))
+        assertTrue(isValidIban("FR7630006000011234567890189"))
+        assertTrue(isValidIban("AT611904300234573201"))
+    }
+
+    @Test
+    fun `rejects invalid IBANs`() {
+        assertFalse(isValidIban("DE89370400440532013001"))
+        assertFalse(isValidIban("DE00000000000000000000"))
+        assertFalse(isValidIban("XX123456789012345"))
+    }
+
+    @Test
+    fun `rejects too short or too long strings as invalid IBAN`() {
+        assertFalse(isValidIban("DE89"))
+        assertFalse(isValidIban("DE8937040044053201300012345678901234567"))
+    }
+
+    @Test
+    fun `validates IBAN with spaces`() {
+        assertTrue(isValidIban("GB29 NWBK 6016 1331 9268 19"))
+        assertTrue(isValidIban("AT61 1904 3002 3457 3201"))
     }
 }

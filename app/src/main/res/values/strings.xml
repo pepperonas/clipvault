@@ -237,6 +237,16 @@
     <string name="batch_deleted">%d deleted</string>
     <string name="batch_pinned">%d pinned</string>
 
+    <!-- Biometric disable -->
+    <string name="biometric_disable_subtitle">Authenticate to disable</string>
+
+    <!-- Disable app lock with password -->
+    <string name="disable_applock_enter_password">Enter your password to disable the app lock.</string>
+
+    <!-- IBAN validation -->
+    <string name="iban_valid">Valid</string>
+    <string name="iban_invalid">Invalid</string>
+
     <!-- About screen -->
     <string name="about_title">About ClipVault</string>
     <string name="about_icon_description">ClipVault icon</string>

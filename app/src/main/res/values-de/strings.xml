@@ -234,6 +234,16 @@
     <string name="batch_deleted">%d gel\u00f6scht</string>
     <string name="batch_pinned">%d angepinnt</string>
 
+    <!-- Biometric disable -->
+    <string name="biometric_disable_subtitle">Authentifiziere dich zum Deaktivieren</string>
+
+    <!-- Disable app lock with password -->
+    <string name="disable_applock_enter_password">Gib dein Passwort ein, um die App-Sperre zu deaktivieren.</string>
+
+    <!-- IBAN validation -->
+    <string name="iban_valid">G\u00fcltig</string>
+    <string name="iban_invalid">Ung\u00fcltig</string>
+
     <!-- About screen -->
     <string name="about_title">\u00dcber ClipVault</string>
     <string name="about_icon_description">ClipVault-Symbol</string>

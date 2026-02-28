@@ -84,12 +84,60 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class SettingsActivity : FragmentActivity() {
+
+    private var onBiometricSuccess: (() -> Unit)? = null
+
+    private fun showBiometricForDisable(onSuccess: () -> Unit) {
+        val biometricManager = BiometricManager.from(this)
+        val canAuthenticate = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        )
+
+        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+            Toast.makeText(this, getString(R.string.action_failed), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        onBiometricSuccess = onSuccess
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.biometric_title))
+            .setSubtitle(getString(R.string.biometric_disable_subtitle))
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                        BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+            .build()
+
+        val biometricPrompt = BiometricPrompt(
+            this,
+            ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    onBiometricSuccess?.invoke()
+                    onBiometricSuccess = null
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    onBiometricSuccess = null
+                }
+            }
+        )
+
+        biometricPrompt.authenticate(promptInfo)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -147,13 +195,32 @@ class SettingsActivity : FragmentActivity() {
                         if (enabled) {
                             showAppLockDialog = true
                         } else {
-                            showDisableAppLockDialog = true
+                            if (passwordGenerated) {
+                                // Fingerprint mode: require biometric auth to disable
+                                showBiometricForDisable {
+                                    ksm.clearAppLock()
+                                    appLockEnabled = false
+                                    passwordGenerated = false
+                                    biometricEnabled = ksm.isAppLockBiometricEnabled()
+                                }
+                            } else {
+                                // Password mode: require password to disable
+                                showDisableAppLockDialog = true
+                            }
                         }
                     },
                     onChangePassword = { showChangePasswordDialog = true },
                     onToggleBiometric = { enabled ->
-                        ksm.setAppLockBiometricEnabled(enabled)
-                        biometricEnabled = enabled
+                        if (!enabled) {
+                            // Require biometric auth to disable biometric unlock
+                            showBiometricForDisable {
+                                ksm.setAppLockBiometricEnabled(false)
+                                biometricEnabled = false
+                            }
+                        } else {
+                            ksm.setAppLockBiometricEnabled(true)
+                            biometricEnabled = true
+                        }
                     },
                     onToggleAmoled = { enabled ->
                         ksm.setAmoledMode(enabled)
@@ -210,24 +277,18 @@ class SettingsActivity : FragmentActivity() {
                 }
 
                 if (showDisableAppLockDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDisableAppLockDialog = false },
-                        title = { Text(stringResource(R.string.disable_applock_title)) },
-                        text = { Text(stringResource(R.string.disable_applock_message)) },
-                        confirmButton = {
-                            TextButton(onClick = {
+                    DisableWithPasswordDialog(
+                        onDismiss = { showDisableAppLockDialog = false },
+                        onConfirm = { password ->
+                            val stored = ksm.retrieveAppLockPassword()
+                            if (stored == password) {
                                 showDisableAppLockDialog = false
                                 ksm.clearAppLock()
                                 appLockEnabled = false
                                 passwordGenerated = false
                                 biometricEnabled = ksm.isAppLockBiometricEnabled()
-                            }) {
-                                Text(stringResource(R.string.disable_button), color = MaterialTheme.colorScheme.error)
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDisableAppLockDialog = false }) {
-                                Text(stringResource(R.string.cancel))
+                            } else {
+                                Toast.makeText(this@SettingsActivity, getString(R.string.wrong_password), Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
@@ -881,6 +942,62 @@ fun ChangePasswordDialog(
                 }
             }) {
                 Text(stringResource(R.string.change_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+// --- Disable App Lock with Password Dialog ---
+
+@Composable
+fun DisableWithPasswordDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.disable_applock_title)) },
+        text = {
+            Column {
+                Text(
+                    stringResource(R.string.disable_applock_enter_password),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.password_label)) },
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (password.isNotEmpty()) onConfirm(password) },
+                enabled = password.isNotEmpty()
+            ) {
+                Text(stringResource(R.string.disable_button), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
