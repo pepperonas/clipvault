@@ -12,7 +12,7 @@
 [![Material 3](https://img.shields.io/badge/Material%20You-Dynamic%20Colors-6750A4)](https://m3.material.io)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-4.1.0-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Version](https://img.shields.io/badge/Version-4.2.0-orange)](https://github.com/pepperonas/clipvault/releases)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
@@ -149,6 +149,7 @@ This project uses [Semantic Versioning](https://semver.org/):
 
 | Version | Change |
 |---|---|
+| 4.2.0 | Version bump |
 | 4.1.0 | Content type filter chips, swipe-right-to-pin, statistics screen with charts, encrypted export/import backup (.cvbk) |
 | 4.0.0 | Extended content type detection (18 types), Smart Actions bottom sheet, AMOLED mode |
 | 3.11.0 | Fix: notification now truly minimal — new channel ID + deferred foreground behavior to avoid cached high-importance channel |
