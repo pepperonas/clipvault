@@ -52,7 +52,7 @@ ClipVault works **completely offline**. The app has the INTERNET permission expl
 
 ## Screenshots
 
-| Clipboard History | IBAN Filter | Statistics |
+| Clipboard History | Content Type Filter | Statistics |
 |:-:|:-:|:-:|
 | <img src="screenshots/01_history_main.png" width="250"> | <img src="screenshots/04_iban_filter.png" width="250"> | <img src="screenshots/05_statistics.png" width="250"> |
 
