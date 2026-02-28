@@ -72,7 +72,7 @@ Critical for preventing re-insertion of deleted content by the clipboard polling
 
 - **KeyStoreManager**: Three concerns:
   1. **DB passphrase**: Auto-generated 64-char, encrypted with AES-256-GCM via Android KeyStore (StrongBox preferred on API 28+). User never sees this.
-  2. **App lock**: Optional UI lock with password (user-set or auto-generated) + biometric support. Stored separately from DB passphrase.
+  2. **App lock**: Optional UI lock with password (user-set or auto-generated) + biometric support. Stored separately from DB passphrase. Disabling app lock requires authentication (biometric for fingerprint mode, password entry for password mode) via `showBiometricForDisable()` in SettingsActivity.
   3. **Preferences**: AMOLED mode, auto-cleanup days — stored in SharedPreferences (not encrypted, non-sensitive).
 - **v3 migration**: On first launch after upgrade, legacy user password is adopted as DB passphrase (no re-encryption needed), and app lock settings are preserved.
 - Passphrase byte arrays are zeroed after use (`Arrays.fill(bytes, 0)`)
@@ -82,6 +82,8 @@ Critical for preventing re-insertion of deleted content by the clipboard polling
 `ContentTypeDetector.detectContentType()` classifies clipboard content into 18 types using pre-compiled regex patterns. Detection order matters — social media domains have highest priority, generic TEXT is fallback. Content types are computed on-the-fly (not stored in DB), so the enum can be extended without migration.
 
 `ContentType` enum carries `icon` (Material icon), `color`, and `labelRes` (localized string resource ID). Used by filter chips, entry cards, smart actions, and statistics.
+
+`isValidIban()` validates IBANs using the ISO 13616 mod-97 checksum algorithm. The UI shows a green checkmark ("Valid") or red cross ("Invalid") indicator on IBAN-type clips in both `ClipEntryCard` and `SelectableClipEntryCard`.
 
 ### Smart Actions
 
@@ -108,7 +110,7 @@ Multi-activity app with Jetpack Compose screens:
   - Haptic feedback on copy (tap) and swipe actions
   - Favorites accordion, search, overflow menu (Statistics, Guide, Settings)
 - **StatisticsActivity** — one-shot snapshot via `getAllEntriesSnapshot()` in `LaunchedEffect`, no ViewModel. Canvas-drawn donut chart + bar chart.
-- **SettingsActivity** — app lock, AMOLED toggle, backup export/import, auto-cleanup with radio dialog, about link
+- **SettingsActivity** — app lock (secure disable requires auth), AMOLED toggle, backup export/import, auto-cleanup with radio dialog, about link
 - **AboutActivity** — app icon, version, author, copyright
 
 `HistoryViewModel` uses `combine(unfilteredEntries, _selectedContentType, _sortOrder)` to layer content type filter and sort on top of search. Pinned entries always sort first; `SortOrder` applies only to non-pinned. Batch selection state (`selectionMode`, `selectedIds`) is managed via `MutableStateFlow`. `contentTypeCounts` is derived from unfiltered entries for chip badge counts.
