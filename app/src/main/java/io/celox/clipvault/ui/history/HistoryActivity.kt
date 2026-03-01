@@ -226,7 +226,7 @@ class HistoryActivity : FragmentActivity() {
 
     override fun onResume() {
         super.onResume()
-        accessibilityEnabled.value = true // TEMP: for screenshots
+        accessibilityEnabled.value = isAccessibilityServiceEnabled()
 
         val app = application as ClipVaultApp
 
