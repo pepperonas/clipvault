@@ -40,7 +40,7 @@ Manual dependency wiring — no DI framework. `ClipVaultApp` (Application subcla
 
 ### Clipboard capture flow
 
-1. User enables the **AccessibilityService** (`ClipAccessibilityService`) in Android settings
+1. User enables the **AccessibilityService** (`ClipAccessibilityService`) in Android settings. On Android 13+ with sideloaded APKs, this requires a 3-step flow: try to enable in Accessibility (triggers restricted settings hint) → allow restricted settings in app info (⋮ menu, requires PIN/biometric) → go back to Accessibility and enable. The `SetupBanner` composable in HistoryActivity guides users through this.
 2. `onServiceConnected` registers a `ClipboardManager.OnPrimaryClipChangedListener` and starts `ClipVaultService` (foreground service with persistent notification)
 3. Three capture strategies: listener (primary), accessibility event polling (fallback), periodic polling every 2s (Android 16+ fallback)
 4. On each clipboard change, debounces (500ms same-text dedup), then inserts via `ClipRepository.insert()` which also deduplicates against the latest entry
