@@ -1196,8 +1196,9 @@ fun SetupBanner(
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
 
-            // Step 1: Restricted settings (Android 13+, sideloaded APKs)
+            // Android 13+: 3-step flow (try accessibility → allow restricted → enable)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Step 1: Open Accessibility and tap ClipVault (triggers restricted settings hint)
                 Text(
                     stringResource(R.string.setup_step1_title),
                     style = MaterialTheme.typography.labelLarge,
@@ -1206,6 +1207,31 @@ fun SetupBanner(
                 )
                 Text(
                     stringResource(R.string.setup_step1_text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                )
+                OutlinedButton(
+                    onClick = onOpenAccessibilitySettings,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.setup_open_accessibility))
+                }
+
+                // Step 2: Allow restricted settings in app info
+                Text(
+                    stringResource(R.string.setup_step2_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    stringResource(R.string.setup_step2_text),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
                 )
@@ -1222,33 +1248,55 @@ fun SetupBanner(
                     Text(stringResource(R.string.setup_open_app_info))
                 }
 
+                // Step 3: Go back to Accessibility and enable
                 Text(
-                    stringResource(R.string.setup_step2_title),
+                    stringResource(R.string.setup_step3_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
-            }
-
-            Text(
-                stringResource(R.string.setup_accessibility_text),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
-            )
-            Button(
-                onClick = onOpenAccessibilitySettings,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
+                Text(
+                    stringResource(R.string.setup_step3_text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
                 )
-            ) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                Button(
+                    onClick = onOpenAccessibilitySettings,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.setup_open_accessibility_again))
+                }
+            } else {
+                // Pre-Android 13: single step, no restricted settings needed
+                Text(
+                    stringResource(R.string.setup_step3_text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.setup_open_accessibility))
+                Button(
+                    onClick = onOpenAccessibilitySettings,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.setup_open_accessibility))
+                }
             }
         }
     }

@@ -99,7 +99,7 @@
     <string name="guide_title">Anleitung</string>
     <string name="guide_understood">Verstanden</string>
     <string name="guide_setup_title">1. Einrichtung</string>
-    <string name="guide_setup_text">Aktiviere den Accessibility Service in den Android-Einstellungen (Bedienungshilfen > ClipVault). Erst dann kann ClipVault Kopier-Aktionen automatisch erkennen und speichern.\n\nBei Installation per APK (nicht \u00fcber Play Store, ab Android 13): \u00d6ffne zuerst die App-Info von ClipVault, tippe auf \u22ee (oben rechts) und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\".</string>
+    <string name="guide_setup_text">Aktiviere den Accessibility Service in den Android-Einstellungen (Bedienungshilfen > ClipVault). Erst dann kann ClipVault Kopier-Aktionen automatisch erkennen und speichern.\n\nBei Installation per APK (nicht \u00fcber Play Store, ab Android 13): Tippe zuerst auf \"ClipVault\" in den Bedienungshilfen — Android zeigt einen Hinweis zu eingeschr\u00e4nkten Einstellungen. \u00d6ffne dann die App-Info von ClipVault, tippe auf \u22ee (oben rechts) und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\". Gehe danach zur\u00fcck und aktiviere den Service.</string>
     <string name="guide_copy_title">2. Clips kopieren</string>
     <string name="guide_copy_text">Tippe auf einen Eintrag, um ihn in die Zwischenablage zu kopieren. Langer Druck \u00f6ffnet Smart Actions \u2014 kontextabh\u00e4ngige Aktionen wie URLs \u00f6ffnen, Telefonnummern anrufen oder E-Mails senden. Mit dem kleinen Pfeil kannst du lange Eintr\u00e4ge auf-/zuklappen.</string>
     <string name="guide_favorites_title">3. Favoriten</string>
@@ -115,12 +115,15 @@
 
     <!-- Setup banner -->
     <string name="setup_title">Einrichtung</string>
-    <string name="setup_step1_title">Schritt 1: Eingeschr\u00e4nkte Einstellungen erlauben</string>
-    <string name="setup_step1_text">Bei Installation per APK (nicht \u00fcber Play Store) blockiert Android den Accessibility Service. \u00d6ffne die App-Info, tippe oben rechts auf \u22ee und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\".</string>
-    <string name="setup_open_app_info">App-Info \u00f6ffnen</string>
-    <string name="setup_step2_title">Schritt 2: Accessibility Service aktivieren</string>
-    <string name="setup_accessibility_text">ClipVault ben\u00f6tigt den Accessibility Service, um Kopier-Aktionen automatisch zu erkennen. Aktiviere \"ClipVault\" in den Bedienungshilfen.</string>
+    <string name="setup_step1_title">Schritt 1: Bedienungshilfen \u00f6ffnen</string>
+    <string name="setup_step1_text">\u00d6ffne die Bedienungshilfen und tippe auf \"ClipVault\". Android zeigt einen Hinweis, dass eingeschr\u00e4nkte Einstellungen blockiert sind — das ist normal bei APK-Installation.</string>
     <string name="setup_open_accessibility">Bedienungshilfen \u00f6ffnen</string>
+    <string name="setup_step2_title">Schritt 2: Eingeschr\u00e4nkte Einstellungen erlauben</string>
+    <string name="setup_step2_text">\u00d6ffne die App-Info von ClipVault. Tippe auf \u22ee (drei Punkte, oben rechts) und w\u00e4hle \"Eingeschr\u00e4nkte Einstellungen zulassen\". M\u00f6glicherweise musst du mit PIN oder Fingerabdruck best\u00e4tigen.</string>
+    <string name="setup_open_app_info">App-Info \u00f6ffnen</string>
+    <string name="setup_step3_title">Schritt 3: Accessibility Service aktivieren</string>
+    <string name="setup_step3_text">Gehe zur\u00fcck zu den Bedienungshilfen, tippe erneut auf \"ClipVault\" und aktiviere den Service. Diesmal l\u00e4sst Android es zu.</string>
+    <string name="setup_open_accessibility_again">Bedienungshilfen \u00f6ffnen</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Einstellungen</string>

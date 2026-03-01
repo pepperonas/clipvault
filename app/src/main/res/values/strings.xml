@@ -102,7 +102,7 @@
     <string name="guide_title">Guide</string>
     <string name="guide_understood">Got it</string>
     <string name="guide_setup_title">1. Setup</string>
-    <string name="guide_setup_text">Enable the Accessibility Service in Android Settings (Accessibility > ClipVault). Only then can ClipVault automatically detect and save copy actions.\n\nWhen installed via APK (not from Play Store, Android 13+): First open ClipVault\'s app info, tap \u22ee (top right) and select \"Allow restricted settings\".</string>
+    <string name="guide_setup_text">Enable the Accessibility Service in Android Settings (Accessibility > ClipVault). Only then can ClipVault automatically detect and save copy actions.\n\nWhen installed via APK (not from Play Store, Android 13+): First tap \"ClipVault\" in Accessibility settings — Android will show a restricted settings warning. Then open ClipVault\'s app info, tap \u22ee (top right) and select \"Allow restricted settings\". Finally go back to Accessibility and enable the service.</string>
     <string name="guide_copy_title">2. Copy clips</string>
     <string name="guide_copy_text">Tap an entry to copy it to the clipboard. Long press to open Smart Actions \u2014 context-aware actions like opening URLs, calling phone numbers, or sending emails. Use the small arrow to expand/collapse long entries.</string>
     <string name="guide_favorites_title">3. Favorites</string>
@@ -118,12 +118,15 @@
 
     <!-- Setup banner -->
     <string name="setup_title">Setup</string>
-    <string name="setup_step1_title">Step 1: Allow restricted settings</string>
-    <string name="setup_step1_text">When installed via APK (not from Play Store), Android blocks the Accessibility Service. Open the app info, tap \u22ee at the top right and select \"Allow restricted settings\".</string>
-    <string name="setup_open_app_info">Open app info</string>
-    <string name="setup_step2_title">Step 2: Enable Accessibility Service</string>
-    <string name="setup_accessibility_text">ClipVault needs the Accessibility Service to automatically detect copy actions. Enable \"ClipVault\" in Accessibility settings.</string>
+    <string name="setup_step1_title">Step 1: Open Accessibility Settings</string>
+    <string name="setup_step1_text">Open the Accessibility settings and tap \"ClipVault\". Android will show a message that restricted settings are blocked — this is expected for APK installations.</string>
     <string name="setup_open_accessibility">Open Accessibility</string>
+    <string name="setup_step2_title">Step 2: Allow restricted settings</string>
+    <string name="setup_step2_text">Open ClipVault\'s app info page. Tap \u22ee (three dots, top right) and select \"Allow restricted settings\". You may need to confirm with your PIN or fingerprint.</string>
+    <string name="setup_open_app_info">Open app info</string>
+    <string name="setup_step3_title">Step 3: Enable Accessibility Service</string>
+    <string name="setup_step3_text">Go back to Accessibility settings, tap \"ClipVault\" again and enable the service. This time Android will allow it.</string>
+    <string name="setup_open_accessibility_again">Open Accessibility</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>
