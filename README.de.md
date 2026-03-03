@@ -13,6 +13,17 @@
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-blue?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-4.5.2-orange)](https://github.com/pepperonas/clipvault/releases)
+[![Release](https://img.shields.io/github/v/release/pepperonas/clipvault?logo=github&label=Release)](https://github.com/pepperonas/clipvault/releases/latest)
+[![Build](https://img.shields.io/github/actions/workflow/status/pepperonas/clipvault/release.yml?logo=githubactions&logoColor=white&label=Build)](https://github.com/pepperonas/clipvault/actions)
+[![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org)
+[![AGP](https://img.shields.io/badge/AGP-8.7.3-02569B?logo=gradle&logoColor=white)](https://developer.android.com/build)
+[![Room](https://img.shields.io/badge/Room-2.6.1-4285F4?logo=android&logoColor=white)](https://developer.android.com/training/data-storage/room)
+[![ProGuard](https://img.shields.io/badge/ProGuard-Enabled-red?logo=android&logoColor=white)](https://www.guardsquare.com/proguard)
+[![No Internet](https://img.shields.io/badge/Internet-None%20%E2%9C%93-success)](https://github.com/pepperonas/clipvault)
+[![Offline](https://img.shields.io/badge/Funktioniert-100%25%20Offline-blue?logo=airplayvideo&logoColor=white)](https://github.com/pepperonas/clipvault)
+[![Biometric](https://img.shields.io/badge/Biometrie-Unterst%C3%BCtzt-blueviolet?logo=fingerprint&logoColor=white)](https://developer.android.com/training/sign-in/biometric-auth)
+[![Encryption](https://img.shields.io/badge/AES--256--GCM-KeyStore-critical?logo=letsencrypt&logoColor=white)](https://developer.android.com/privacy-and-security/keystore)
+[![i18n](https://img.shields.io/badge/Sprachen-EN%20%7C%20DE-informational?logo=translate&logoColor=white)](https://github.com/pepperonas/clipvault)
 
 <p align="center">
   <img src="clipvault.png" alt="ClipVault" width="400">
